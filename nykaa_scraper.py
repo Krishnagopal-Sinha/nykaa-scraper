@@ -124,52 +124,195 @@ class ProductInfo:
     product_url: str
 
 class CheckpointManager:
-    """Manages checkpoint saving and loading for resume functionality"""
+    """Manages checkpoint saving and loading for resume functionality with live updates"""
     
     def __init__(self, checkpoint_dir: str = "checkpoints"):
         self.checkpoint_dir = checkpoint_dir
         os.makedirs(checkpoint_dir, exist_ok=True)
+        self._last_save_time = {}  # Track last save time per keyword
+        self._min_save_interval = 30  # Minimum seconds between saves (live updates)
     
-    def save_checkpoint(self, keyword: str, scraped_products: List[Dict], processed_urls: set, metadata: Dict):
-        """Save checkpoint data"""
+    def save_checkpoint(self, keyword: str, scraped_products: List[Dict], processed_urls: set, 
+                       metadata: Dict, force_save: bool = False):
+        """Save checkpoint data with live updates and transferability"""
+        current_time = time.time()
+        
+        # Check if enough time has passed since last save (unless forced)
+        if not force_save and keyword in self._last_save_time:
+            time_since_last = current_time - self._last_save_time[keyword]
+            if time_since_last < self._min_save_interval:
+                return  # Skip save to avoid too frequent writes
+        
+        # Enhanced checkpoint data with transferability metadata
         checkpoint_data = {
+            'format_version': '2.0',  # Version for compatibility
             'keyword': keyword,
             'scraped_products': scraped_products,
             'processed_urls': list(processed_urls),
             'metadata': metadata,
-            'timestamp': datetime.now().isoformat()
+            'checkpoint_metadata': {
+                'save_timestamp': datetime.now().isoformat(),
+                'unix_timestamp': current_time,
+                'total_products_scraped': len(scraped_products),
+                'total_urls_processed': len(processed_urls),
+                'progress_percentage': (len(processed_urls) / max(1, metadata.get('total_urls', 1))) * 100,
+                'estimated_remaining': metadata.get('total_urls', 0) - len(processed_urls),
+                'scraper_version': '2.0_live_checkpoints',
+                'transfer_ready': True,  # Indicates this checkpoint can be shared
+                'system_info': {
+                    'platform': os.name,
+                    'working_directory': os.getcwd()
+                }
+            },
+            'resume_instructions': {
+                'how_to_resume': 'Place this checkpoint file in the checkpoints/ directory and run the scraper with the same keyword',
+                'required_keyword': keyword,
+                'compatible_versions': ['2.0', '2.0_live_checkpoints']
+            }
         }
         
         checkpoint_file = os.path.join(self.checkpoint_dir, f"checkpoint_{keyword.replace(' ', '_')}.pkl")
+        
         try:
-            with open(checkpoint_file, 'wb') as f:
+            # Save with atomic write (write to temp file first, then rename)
+            temp_file = checkpoint_file + '.tmp'
+            with open(temp_file, 'wb') as f:
                 pickle.dump(checkpoint_data, f)
-            logger.info(f"Checkpoint saved for keyword '{keyword}': {len(scraped_products)} products")
+            
+            # Atomic rename
+            os.rename(temp_file, checkpoint_file)
+            
+            # Also save human-readable JSON version for inspection/transfer
+            json_file = os.path.join(self.checkpoint_dir, f"checkpoint_{keyword.replace(' ', '_')}.json")
+            json_data = checkpoint_data.copy()
+            # Convert sets to lists for JSON serialization
+            json_data['processed_urls'] = list(processed_urls)
+            
+            with open(json_file, 'w', encoding='utf-8') as f:
+                json.dump(json_data, f, indent=2, ensure_ascii=False)
+            
+            self._last_save_time[keyword] = current_time
+            
+            progress_pct = checkpoint_data['checkpoint_metadata']['progress_percentage']
+            logger.info(f"💾 Live checkpoint saved for '{keyword}': {len(scraped_products)} products ({progress_pct:.1f}% complete)")
+            
         except Exception as e:
-            logger.error(f"Failed to save checkpoint for '{keyword}': {e}")
+            logger.error(f"Failed to save live checkpoint for '{keyword}': {e}")
     
     def load_checkpoint(self, keyword: str) -> Optional[Dict]:
-        """Load checkpoint data"""
+        """Load checkpoint data with compatibility checking"""
         checkpoint_file = os.path.join(self.checkpoint_dir, f"checkpoint_{keyword.replace(' ', '_')}.pkl")
+        
         if os.path.exists(checkpoint_file):
             try:
                 with open(checkpoint_file, 'rb') as f:
                     data = pickle.load(f)
-                logger.info(f"Checkpoint loaded for keyword '{keyword}': {len(data['scraped_products'])} products")
+                
+                # Check format version compatibility
+                format_version = data.get('format_version', '1.0')
+                if format_version not in ['1.0', '2.0', '2.0_live_checkpoints']:
+                    logger.warning(f"Checkpoint format version {format_version} may be incompatible")
+                
+                # Validate checkpoint integrity
+                required_keys = ['keyword', 'scraped_products', 'processed_urls']
+                if not all(key in data for key in required_keys):
+                    logger.error(f"Checkpoint file corrupted - missing required keys")
+                    return None
+                
+                # Check if this checkpoint is for the right keyword
+                if data['keyword'] != keyword:
+                    logger.warning(f"Checkpoint keyword mismatch: expected '{keyword}', found '{data['keyword']}'")
+                    return None
+                
+                # Log checkpoint info
+                checkpoint_meta = data.get('checkpoint_metadata', {})
+                save_time = checkpoint_meta.get('save_timestamp', 'unknown')
+                progress = checkpoint_meta.get('progress_percentage', 0)
+                
+                logger.info(f"📂 Loading checkpoint for '{keyword}':")
+                logger.info(f"   💾 Saved at: {save_time}")
+                logger.info(f"   📊 Progress: {progress:.1f}%")
+                logger.info(f"   🎯 Products: {len(data['scraped_products'])}")
+                logger.info(f"   🔗 URLs processed: {len(data['processed_urls'])}")
+                
+                if checkpoint_meta.get('transfer_ready'):
+                    logger.info(f"   ✅ This checkpoint is transfer-ready")
+                
                 return data
+                
             except Exception as e:
                 logger.error(f"Failed to load checkpoint for '{keyword}': {e}")
+                # Try to load backup JSON version
+                return self._load_json_checkpoint(keyword)
+        
+        return None
+    
+    def _load_json_checkpoint(self, keyword: str) -> Optional[Dict]:
+        """Fallback method to load JSON checkpoint"""
+        json_file = os.path.join(self.checkpoint_dir, f"checkpoint_{keyword.replace(' ', '_')}.json")
+        
+        if os.path.exists(json_file):
+            try:
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                logger.info(f"📂 Loaded JSON checkpoint for '{keyword}' as fallback")
+                return data
+            except Exception as e:
+                logger.error(f"Failed to load JSON checkpoint for '{keyword}': {e}")
+        
         return None
     
     def clear_checkpoint(self, keyword: str):
         """Clear checkpoint after successful completion"""
-        checkpoint_file = os.path.join(self.checkpoint_dir, f"checkpoint_{keyword.replace(' ', '_')}.pkl")
-        try:
-            if os.path.exists(checkpoint_file):
-                os.remove(checkpoint_file)
-                logger.info(f"Checkpoint cleared for keyword '{keyword}'")
-        except Exception as e:
-            logger.error(f"Failed to clear checkpoint for '{keyword}': {e}")
+        files_to_remove = [
+            os.path.join(self.checkpoint_dir, f"checkpoint_{keyword.replace(' ', '_')}.pkl"),
+            os.path.join(self.checkpoint_dir, f"checkpoint_{keyword.replace(' ', '_')}.json")
+        ]
+        
+        for file_path in files_to_remove:
+            try:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception as e:
+                logger.error(f"Failed to clear checkpoint file {file_path}: {e}")
+        
+        if keyword in self._last_save_time:
+            del self._last_save_time[keyword]
+        
+        logger.info(f"🗑️  Checkpoint cleared for keyword '{keyword}'")
+    
+    def force_save_checkpoint(self, keyword: str, scraped_products: List[Dict], 
+                             processed_urls: set, metadata: Dict):
+        """Force save checkpoint immediately (for shutdown scenarios)"""
+        logger.info(f"🔄 Force saving checkpoint for '{keyword}'...")
+        self.save_checkpoint(keyword, scraped_products, processed_urls, metadata, force_save=True)
+    
+    def list_available_checkpoints(self) -> List[Dict]:
+        """List all available checkpoints with metadata"""
+        checkpoints = []
+        
+        for file in os.listdir(self.checkpoint_dir):
+            if file.startswith('checkpoint_') and file.endswith('.pkl'):
+                try:
+                    file_path = os.path.join(self.checkpoint_dir, file)
+                    with open(file_path, 'rb') as f:
+                        data = pickle.load(f)
+                    
+                    checkpoint_info = {
+                        'keyword': data.get('keyword', 'unknown'),
+                        'file': file,
+                        'products_count': len(data.get('scraped_products', [])),
+                        'urls_processed': len(data.get('processed_urls', [])),
+                        'save_time': data.get('checkpoint_metadata', {}).get('save_timestamp', 'unknown'),
+                        'progress': data.get('checkpoint_metadata', {}).get('progress_percentage', 0),
+                        'transferable': data.get('checkpoint_metadata', {}).get('transfer_ready', False)
+                    }
+                    checkpoints.append(checkpoint_info)
+                    
+                except Exception as e:
+                    logger.warning(f"Could not read checkpoint {file}: {e}")
+        
+        return checkpoints
 
 class NykaaScraper:
     """Main scraper class for Nykaa.com with large-scale optimizations"""
@@ -182,6 +325,9 @@ class NykaaScraper:
         """
         Initialize the Nykaa scraper with large-scale optimizations
         """
+        # Kill existing ChromeDriver processes first
+        self._cleanup_existing_chromedrivers()
+        
         self.base_url = "https://www.nykaa.com"
         self.delay_range = delay_range
         self.max_threads = max_threads
@@ -217,7 +363,28 @@ class NykaaScraper:
             'Connection': 'keep-alive',
             'Upgrade-Insecure-Requests': '1',
         })
-        
+    
+    def _cleanup_existing_chromedrivers(self):
+        """Kill all existing ChromeDriver processes from previous runs"""
+        import subprocess
+        try:
+            logger.info("🧹 Cleaning up existing ChromeDriver processes...")
+            
+            # Kill ChromeDriver processes
+            subprocess.run(['pkill', '-f', 'chromedriver'], capture_output=True)
+            
+            # Kill Chrome processes started by ChromeDriver
+            subprocess.run(['pkill', '-f', 'Google Chrome.*--remote-debugging-port'], capture_output=True)
+            
+            # Wait a moment for processes to die
+            import time
+            time.sleep(2)
+            
+            logger.info("✅ ChromeDriver cleanup completed")
+            
+        except Exception as e:
+            logger.debug(f"ChromeDriver cleanup error (non-critical): {e}")
+    
     def _get_thread_driver(self):
         """Get or create a driver instance for the current thread"""
         if not hasattr(self._thread_local, 'driver') or self._thread_local.driver is None:
@@ -226,35 +393,58 @@ class NykaaScraper:
         return self._thread_local.driver
     
     def _create_driver_instance(self):
-        """Create a new WebDriver instance with optimized settings"""
-        try:
-            chrome_options = Options()
-            if self.headless:
-                chrome_options.add_argument("--headless")
-            
-            # Optimizations for large-scale scraping
-            chrome_options.add_argument("--no-sandbox")
-            chrome_options.add_argument("--disable-dev-shm-usage")
-            chrome_options.add_argument("--disable-gpu")
-            chrome_options.add_argument("--window-size=1920,1080")
-            chrome_options.add_argument(f"--user-agent={self.ua.random}")
-            chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-            chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-            chrome_options.add_experimental_option('useAutomationExtension', False)
-            
-            # Memory optimizations
-            chrome_options.add_argument("--memory-pressure-off")
-            chrome_options.add_argument("--max_old_space_size=4096")
-            
-            service = self._get_chromedriver_service()
-            driver = webdriver.Chrome(service=service, options=chrome_options)
-            driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-            
-            return driver
-            
-        except Exception as e:
-            logger.error(f"Failed to create WebDriver: {e}")
-            raise
+        """Create a new WebDriver instance with improved error handling"""
+        max_attempts = 3
+        
+        for attempt in range(max_attempts):
+            try:
+                chrome_options = Options()
+                if self.headless:
+                    chrome_options.add_argument("--headless")
+                
+                # Optimizations for large-scale scraping
+                chrome_options.add_argument("--no-sandbox")
+                chrome_options.add_argument("--disable-dev-shm-usage")
+                chrome_options.add_argument("--disable-gpu")
+                chrome_options.add_argument("--window-size=1920,1080")
+                chrome_options.add_argument(f"--user-agent={self.ua.random}")
+                chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+                chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+                chrome_options.add_experimental_option('useAutomationExtension', False)
+                
+                # Memory optimizations
+                chrome_options.add_argument("--memory-pressure-off")
+                chrome_options.add_argument("--max_old_space_size=4096")
+                
+                # Additional stability options
+                chrome_options.add_argument("--disable-extensions")
+                chrome_options.add_argument("--disable-plugins")
+                chrome_options.add_argument("--disable-images")  # Faster loading
+                # Removed --disable-javascript since we need JS for Nykaa
+                
+                service = self._get_chromedriver_service()
+                driver = webdriver.Chrome(service=service, options=chrome_options)
+                driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+                
+                logger.info(f"✅ ChromeDriver successfully created (attempt {attempt + 1})")
+                return driver
+                
+            except Exception as e:
+                logger.warning(f"❌ ChromeDriver creation failed (attempt {attempt + 1}/{max_attempts}): {e}")
+                
+                if attempt < max_attempts - 1:
+                    logger.info("🔄 Trying to download fresh ChromeDriver...")
+                    try:
+                        # Force download fresh ChromeDriver
+                        fresh_path = self._download_fresh_chromedriver()
+                        # Update the cached path
+                        self._chromedriver_path = fresh_path
+                        logger.info(f"📦 Fresh ChromeDriver downloaded: {fresh_path}")
+                    except Exception as download_error:
+                        logger.error(f"Failed to download fresh ChromeDriver: {download_error}")
+                else:
+                    logger.error(f"Failed to create ChromeDriver after {max_attempts} attempts")
+                    raise e
     
     def _get_chromedriver_service(self):
         """Get ChromeDriver service with simplified setup"""
@@ -263,118 +453,102 @@ class NykaaScraper:
         return Service(self._chromedriver_path)
     
     def _setup_chromedriver(self):
-        """Setup ChromeDriver with automatic detection and download"""
+        """Setup ChromeDriver with file existence check (skip hanging --version test)"""
         import platform
         import subprocess
         import stat
         
-        # Try system ChromeDriver first
+        def is_valid_chromedriver(path):
+            """Check if path is a valid ChromeDriver without running --version"""
+            try:
+                if not os.path.exists(path):
+                    return False
+                
+                # Check if it's a file and executable
+                if not os.path.isfile(path):
+                    return False
+                
+                # Make sure it's executable
+                os.chmod(path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                
+                # Check file size (ChromeDriver should be > 1MB)
+                file_size = os.path.getsize(path)
+                if file_size < 1000000:  # 1MB minimum
+                    logger.warning(f"ChromeDriver file too small: {file_size} bytes")
+                    return False
+                
+                # Check if filename contains chromedriver
+                if 'chromedriver' not in os.path.basename(path).lower():
+                    return False
+                
+                logger.info(f"✅ Valid ChromeDriver file found: {path} ({file_size:,} bytes)")
+                return True
+                
+            except Exception as e:
+                logger.warning(f"Error validating ChromeDriver {path}: {e}")
+                return False
+        
+        # List of paths to try in order
+        paths_to_try = []
+        
+        # 1. Specific known path
+        specific_path = "/Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver_138.0.7204.158/chromedriver-mac-arm64/chromedriver"
+        if os.path.exists(specific_path):
+            paths_to_try.append(("Specific path", specific_path))
+        
+        # 2. Search local drivers directory
+        local_drivers_dir = os.path.join(os.getcwd(), "drivers")
+        if os.path.exists(local_drivers_dir):
+            for root, dirs, files in os.walk(local_drivers_dir):
+                for file in files:
+                    if file == 'chromedriver':
+                        potential_path = os.path.join(root, file)
+                        if potential_path != specific_path:  # Avoid duplicates
+                            paths_to_try.append(("Local drivers", potential_path))
+        
+        # 3. System ChromeDriver
         try:
-            result = subprocess.run(['which', 'chromedriver'], capture_output=True, text=True)
+            result = subprocess.run(['which', 'chromedriver'], capture_output=True, text=True, timeout=3)
             if result.returncode == 0:
-                driver_path = result.stdout.strip()
-                # Test if it actually works
-                test_result = subprocess.run([driver_path, '--version'], capture_output=True, text=True, timeout=5)
-                if test_result.returncode == 0:
-                    logger.info(f"Using system ChromeDriver: {driver_path}")
-                    return driver_path
+                system_path = result.stdout.strip()
+                paths_to_try.append(("System", system_path))
         except Exception:
             pass
         
-        # Try webdriver-manager
-        try:
-            logger.info("Attempting to install ChromeDriver using webdriver-manager...")
-            driver_path = ChromeDriverManager().install()
-            logger.info(f"webdriver-manager returned path: {driver_path}")
+        # Test each path (file existence check only)
+        for source, path in paths_to_try:
+            logger.info(f"Checking ChromeDriver from {source}: {path}")
             
-            # The webdriver-manager often returns the wrong file (THIRD_PARTY_NOTICES)
-            # We need to find the actual chromedriver executable
-            actual_driver_path = None
-            
-            # Check if the returned path is actually the executable
-            if (os.path.isfile(driver_path) and 
-                os.access(driver_path, os.X_OK) and 
-                not driver_path.endswith('THIRD_PARTY_NOTICES.chromedriver')):
-                try:
-                    test_result = subprocess.run([driver_path, '--version'], capture_output=True, text=True, timeout=5)
-                    if test_result.returncode == 0:
-                        actual_driver_path = driver_path
-                except Exception:
-                    pass
-            
-            # If the returned path is wrong, search for the actual executable
-            if not actual_driver_path:
-                logger.info("Searching for actual ChromeDriver executable...")
-                
-                # Get the directory containing the ChromeDriver
-                search_dir = os.path.dirname(driver_path)
-                
-                # Go up directories to find the base cache directory
-                for _ in range(3):
-                    if os.path.basename(search_dir) == '.wdm' or 'chromedriver' in os.path.basename(search_dir):
-                        break
-                    search_dir = os.path.dirname(search_dir)
-                
-                logger.info(f"Searching in directory: {search_dir}")
-                
-                # Search for chromedriver executable recursively
-                for root, dirs, files in os.walk(search_dir):
-                    for file in files:
-                        if file == 'chromedriver':
-                            potential_path = os.path.join(root, file)
-                            
-                            # Skip text files and notices
-                            if ('THIRD_PARTY_NOTICES' in potential_path or 
-                                potential_path.endswith('.txt') or
-                                potential_path.endswith('.chromedriver')):
-                                continue
-                            
-                            if os.path.isfile(potential_path):
-                                # Make it executable
-                                try:
-                                    os.chmod(potential_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
-                                except Exception:
-                                    continue
-                                
-                                # Test if it's a working executable
-                                try:
-                                    test_result = subprocess.run([potential_path, '--version'], 
-                                                               capture_output=True, text=True, timeout=5)
-                                    if test_result.returncode == 0:
-                                        logger.info(f"Found working ChromeDriver: {potential_path}")
-                                        actual_driver_path = potential_path
-                                        break
-                                except Exception as e:
-                                    logger.debug(f"Test failed for {potential_path}: {e}")
-                                    continue
-                    if actual_driver_path:
-                        break
-            
-            if actual_driver_path:
-                logger.info(f"Using ChromeDriver: {actual_driver_path}")
-                return actual_driver_path
+            if is_valid_chromedriver(path):
+                logger.info(f"🎉 SUCCESS: Using ChromeDriver from {source}: {path}")
+                return path
             else:
-                logger.warning("Could not find working ChromeDriver executable in webdriver-manager cache")
-            
-        except Exception as e:
-            logger.warning(f"webdriver-manager failed: {e}")
+                logger.warning(f"❌ Invalid ChromeDriver: {path}")
         
-        # Manual download as last resort
-        logger.info("Attempting manual ChromeDriver download...")
-        try:
-            return self._manual_chromedriver_download()
-        except Exception as e:
-            logger.error(f"Manual ChromeDriver download failed: {e}")
-        
-        raise Exception("Could not setup ChromeDriver - all methods failed")
+        # If all existing paths failed, download a fresh ChromeDriver
+        logger.info("🔄 No valid ChromeDrivers found - downloading fresh ChromeDriver...")
+        return self._download_fresh_chromedriver()
     
-    def _manual_chromedriver_download(self):
-        """Manually download ChromeDriver as last resort"""
+    def _download_fresh_chromedriver(self):
+        """Download a fresh ChromeDriver matching the installed Chrome version"""
         import platform
-        import subprocess
         import requests
         import zipfile
         import stat
+        import tempfile
+        import subprocess
+        import re
+        
+        logger.info("📦 Downloading fresh ChromeDriver...")
+        
+        # First, detect the installed Chrome version
+        chrome_version = self._get_chrome_version()
+        if not chrome_version:
+            logger.warning("Could not detect Chrome version, trying latest versions")
+            chrome_major_version = None
+        else:
+            chrome_major_version = chrome_version.split('.')[0]
+            logger.info(f"🔍 Detected Chrome version: {chrome_version} (major: {chrome_major_version})")
         
         # Determine platform
         system = platform.system().lower()
@@ -393,37 +567,77 @@ class NykaaScraper:
         else:  # Windows
             platform_name = "win64"
         
-        # Create drivers directory
-        drivers_dir = os.path.join(os.getcwd(), "drivers")
-        os.makedirs(drivers_dir, exist_ok=True)
+        # Create fresh drivers directory
+        fresh_drivers_dir = os.path.join(os.getcwd(), "drivers", "fresh")
+        os.makedirs(fresh_drivers_dir, exist_ok=True)
         
-        # Try recent stable versions
-        stable_versions = [
-            "131.0.6778.85",
-            "131.0.6778.69", 
-            "130.0.6723.116",
-            "130.0.6723.91",
-            "129.0.6668.100"
-        ]
+        # Try to find the matching ChromeDriver version
+        versions_to_try = []
         
-        for version in stable_versions:
+        if chrome_major_version:
+            # Try to get the exact matching version from Chrome for Testing API
+            try:
+                logger.info(f"🔍 Looking for ChromeDriver version matching Chrome {chrome_major_version}")
+                api_url = f"https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json"
+                response = requests.get(api_url, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    # Try to find the matching version
+                    channels = ['Stable', 'Beta', 'Dev', 'Canary']
+                    for channel in channels:
+                        if channel in data['channels']:
+                            channel_data = data['channels'][channel]
+                            if 'downloads' in channel_data and 'chromedriver' in channel_data['downloads']:
+                                version = channel_data['version']
+                                if version.startswith(chrome_major_version + '.'):
+                                    versions_to_try.append(version)
+                                    logger.info(f"📍 Found matching version: {version} ({channel})")
+                                    break
+            except Exception as e:
+                logger.warning(f"Could not fetch latest version info: {e}")
+        
+        # Fallback to recent versions if we couldn't find a match
+        if not versions_to_try:
+            logger.info("🔄 Using fallback version list")
+            versions_to_try = [
+                "138.0.7204.158",  # Your exact Chrome version
+                "138.0.7204.157", 
+                "138.0.7204.156",
+                "137.0.6963.79",
+                "136.0.6909.71",
+                "135.0.6790.126"
+            ]
+        
+        # Limit attempts to prevent infinite loop
+        max_attempts = 3
+        attempt_count = 0
+        
+        for version in versions_to_try:
+            if attempt_count >= max_attempts:
+                logger.error(f"❌ Reached maximum download attempts ({max_attempts})")
+                break
+                
+            attempt_count += 1
+            
             try:
                 download_url = f"https://storage.googleapis.com/chrome-for-testing-public/{version}/{platform_name}/chromedriver-{platform_name}.zip"
                 
-                logger.info(f"Trying ChromeDriver version {version} for {platform_name}")
+                logger.info(f"⬇️ Downloading ChromeDriver {version} for {platform_name} (attempt {attempt_count}/{max_attempts})...")
                 
-                # Download
+                # Download with timeout
                 response = requests.get(download_url, timeout=30)
                 if response.status_code != 200:
+                    logger.warning(f"❌ Failed to download version {version} (HTTP {response.status_code})")
                     continue
                 
-                # Save and extract
-                zip_path = os.path.join(drivers_dir, f"chromedriver_{version}.zip")
-                with open(zip_path, "wb") as f:
-                    f.write(response.content)
+                # Save to temp file first
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as temp_file:
+                    temp_file.write(response.content)
+                    zip_path = temp_file.name
                 
                 # Extract
-                extract_dir = os.path.join(drivers_dir, f"chromedriver_{version}")
+                extract_dir = os.path.join(fresh_drivers_dir, f"chromedriver_{version}")
                 os.makedirs(extract_dir, exist_ok=True)
                 
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
@@ -441,36 +655,124 @@ class NykaaScraper:
                     if driver_path:
                         break
                 
+                # Clean up temp file
+                try:
+                    os.remove(zip_path)
+                except:
+                    pass
+                
                 if driver_path and os.path.isfile(driver_path):
                     # Make executable
                     os.chmod(driver_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
                     
-                    # Test if it works
-                    test_result = subprocess.run([driver_path, '--version'], capture_output=True, text=True, timeout=10)
-                    if test_result.returncode == 0:
-                        logger.info(f"Successfully downloaded and verified ChromeDriver {version}: {driver_path}")
-                        
-                        # Clean up zip file
+                    # On macOS, remove quarantine attribute if present
+                    if system == "darwin":
                         try:
-                            os.remove(zip_path)
-                        except:
+                            subprocess.run(['xattr', '-d', 'com.apple.quarantine', driver_path], 
+                                         capture_output=True, check=False)
+                            logger.info(f"🔓 Removed macOS quarantine from: {driver_path}")
+                        except Exception:
                             pass
-                        
+                    
+                    # Test the ChromeDriver by trying to start it briefly (with timeout)
+                    if self._test_chromedriver_connection_with_timeout(driver_path, timeout=10):
+                        file_size = os.path.getsize(driver_path)
+                        logger.info(f"✅ SUCCESS: ChromeDriver {version} working: {driver_path} ({file_size:,} bytes)")
                         return driver_path
-                
-                # Clean up failed attempt
-                try:
-                    os.remove(zip_path)
-                    import shutil
-                    shutil.rmtree(extract_dir)
-                except:
-                    pass
+                    else:
+                        logger.warning(f"❌ ChromeDriver {version} connection test failed")
                 
             except Exception as e:
-                logger.warning(f"Failed to download ChromeDriver version {version}: {e}")
+                logger.warning(f"Failed to download/extract ChromeDriver version {version}: {e}")
                 continue
         
-        raise Exception("Could not download any working ChromeDriver version")
+        # Don't try webdriver-manager to avoid infinite loop
+        logger.error("❌ Could not download any compatible ChromeDriver")
+        logger.error(f"Your Chrome version: {chrome_version}")
+        logger.error("Please update Chrome or manually download a compatible ChromeDriver")
+        
+        raise Exception("❌ FAILED: Could not download any compatible ChromeDriver")
+    
+    def _get_chrome_version(self):
+        """Detect the installed Chrome version"""
+        import subprocess
+        import platform
+        
+        try:
+            system = platform.system().lower()
+            
+            if system == "darwin":  # macOS
+                cmd = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "--version"]
+            elif system == "linux":
+                cmd = ["google-chrome", "--version"]
+            else:  # Windows
+                cmd = ["chrome", "--version"]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                # Extract version number from output like "Google Chrome 138.0.7204.158"
+                import re
+                match = re.search(r'(\d+\.\d+\.\d+\.\d+)', result.stdout)
+                if match:
+                    return match.group(1)
+            
+        except Exception as e:
+            logger.debug(f"Could not detect Chrome version: {e}")
+        
+        return None
+    
+    def _test_chromedriver_connection_with_timeout(self, driver_path, timeout=10):
+        """Test if ChromeDriver can actually start and accept connections with timeout"""
+        import signal
+        import threading
+        
+        def timeout_handler():
+            logger.warning(f"🧪 ChromeDriver test timed out after {timeout}s")
+            return False
+        
+        try:
+            # Use threading with timeout instead of signal (better cross-platform)
+            result = [False]
+            
+            def test_connection():
+                try:
+                    from selenium.webdriver.chrome.service import Service
+                    from selenium.webdriver.chrome.options import Options
+                    
+                    service = Service(driver_path)
+                    options = Options()
+                    options.add_argument("--headless")
+                    options.add_argument("--no-sandbox")
+                    options.add_argument("--disable-dev-shm-usage")
+                    
+                    # Try to create a driver instance briefly
+                    test_driver = webdriver.Chrome(service=service, options=options)
+                    test_driver.quit()
+                    result[0] = True
+                    
+                except Exception as e:
+                    logger.warning(f"🧪 ChromeDriver connection test failed: {driver_path} - {e}")
+                    result[0] = False
+            
+            # Run test in thread with timeout
+            test_thread = threading.Thread(target=test_connection)
+            test_thread.daemon = True
+            test_thread.start()
+            test_thread.join(timeout=timeout)
+            
+            if test_thread.is_alive():
+                logger.warning(f"🧪 ChromeDriver test timed out after {timeout}s: {driver_path}")
+                return False
+            
+            if result[0]:
+                logger.info(f"🧪 ChromeDriver connection test passed: {driver_path}")
+                return True
+            else:
+                return False
+            
+        except Exception as e:
+            logger.warning(f"🧪 ChromeDriver connection test error: {driver_path} - {e}")
+            return False
     
     def random_delay(self):
         """Add random delay between requests"""
@@ -478,7 +780,7 @@ class NykaaScraper:
         time.sleep(delay)
     
     def _scrape_keyword_with_checkpoint(self, keyword: str, max_products: int) -> Dict[str, Any]:
-        """Scrape products for a keyword with checkpoint support and separate file saving"""
+        """Scrape products for a keyword with live checkpoint support and transferable saves"""
         thread_name = threading.current_thread().name
         logger.info(f"[{thread_name}] Starting keyword: '{keyword}' (max: {max_products} products)")
         
@@ -503,7 +805,17 @@ class NykaaScraper:
             new_urls = [url for url in product_urls if url not in processed_urls]
             logger.info(f"[{thread_name}] Found {len(product_urls)} total URLs, {len(new_urls)} new URLs")
             
-            # Process new URLs
+            # Enhanced metadata for better checkpointing
+            enhanced_metadata = {
+                'total_urls': len(product_urls),
+                'processed': len(processed_urls),
+                'remaining': len(new_urls),
+                'keyword': keyword,
+                'max_products': max_products,
+                'thread_name': thread_name
+            }
+            
+            # Process new URLs with frequent checkpointing
             for i, url in enumerate(new_urls):
                 if len(scraped_products) >= max_products:
                     break
@@ -516,19 +828,60 @@ class NykaaScraper:
                         scraped_products.append(asdict(product_info))
                         processed_urls.add(url)
                         
-                        # Save checkpoint periodically
-                        if (self.checkpoint_manager and 
-                            len(scraped_products) % self.save_frequency == 0):
-                            self.checkpoint_manager.save_checkpoint(
-                                keyword, scraped_products, processed_urls, 
-                                {'total_urls': len(product_urls), 'processed': len(processed_urls)}
-                            )
+                        # Update metadata with current progress
+                        enhanced_metadata.update({
+                            'processed': len(processed_urls),
+                            'remaining': len(new_urls) - (i + 1),
+                            'last_processed_url': url,
+                            'current_product_count': len(scraped_products)
+                        })
+                        
+                        # LIVE CHECKPOINT SAVING - more frequent saves
+                        if self.checkpoint_manager:
+                            # Save every 5 products (instead of 25) for more frequent updates
+                            if len(scraped_products) % 5 == 0:
+                                self.checkpoint_manager.save_checkpoint(
+                                    keyword, scraped_products, processed_urls, enhanced_metadata
+                                )
+                            
+                            # Also save after processing reviews for important products
+                            review_count = len(product_info.reviews) if product_info.reviews else 0
+                            if review_count > 10:  # Products with many reviews are valuable
+                                logger.info(f"[{thread_name}] Saving checkpoint after valuable product with {review_count} reviews")
+                                self.checkpoint_manager.save_checkpoint(
+                                    keyword, scraped_products, processed_urls, enhanced_metadata
+                                )
                     
                     self.random_delay()
                     
+                except KeyboardInterrupt:
+                    # Handle Ctrl+C gracefully with force save
+                    logger.info(f"[{thread_name}] ⚠️  Keyboard interrupt detected - saving checkpoint...")
+                    if self.checkpoint_manager:
+                        self.checkpoint_manager.force_save_checkpoint(
+                            keyword, scraped_products, processed_urls, enhanced_metadata
+                        )
+                    raise
+                    
                 except Exception as e:
                     logger.error(f"[{thread_name}] Error scraping {url}: {e}")
+                    
+                    # Save checkpoint even on errors to preserve progress
+                    if self.checkpoint_manager and len(scraped_products) > 0:
+                        enhanced_metadata['last_error'] = str(e)
+                        enhanced_metadata['last_error_url'] = url
+                        self.checkpoint_manager.save_checkpoint(
+                            keyword, scraped_products, processed_urls, enhanced_metadata
+                        )
                     continue
+            
+            # Final checkpoint before completion
+            if self.checkpoint_manager:
+                enhanced_metadata['status'] = 'completed'
+                enhanced_metadata['completion_time'] = datetime.now().isoformat()
+                self.checkpoint_manager.force_save_checkpoint(
+                    keyword, scraped_products, processed_urls, enhanced_metadata
+                )
             
             # Create keyword-specific data structure
             keyword_data = {
@@ -537,7 +890,9 @@ class NykaaScraper:
                     'keyword': keyword,
                     'total_products': len(scraped_products),
                     'total_reviews': sum(len(p.get('reviews', [])) for p in scraped_products),
-                    'scraper_version': '2.0_optimized'
+                    'scraper_version': '2.0_live_checkpoints',
+                    'checkpoint_enabled': self.checkpoint_manager is not None,
+                    'transfer_ready': True
                 },
                 'products': scraped_products
             }
@@ -549,11 +904,38 @@ class NykaaScraper:
             if self.checkpoint_manager:
                 self.checkpoint_manager.clear_checkpoint(keyword)
             
-            logger.info(f"[{thread_name}] Completed '{keyword}': {len(scraped_products)} products")
+            logger.info(f"[{thread_name}] ✅ Completed '{keyword}': {len(scraped_products)} products")
+            return keyword_data
+            
+        except KeyboardInterrupt:
+            logger.info(f"[{thread_name}] ⚠️  Process interrupted - checkpoint saved")
+            # Return partial data
+            keyword_data = {
+                'scrape_metadata': {
+                    'scrape_date': datetime.now().isoformat(),
+                    'keyword': keyword,
+                    'total_products': len(scraped_products),
+                    'total_reviews': sum(len(p.get('reviews', [])) for p in scraped_products),
+                    'scraper_version': '2.0_live_checkpoints',
+                    'status': 'interrupted',
+                    'checkpoint_enabled': True,
+                    'resume_available': True
+                },
+                'products': scraped_products
+            }
             return keyword_data
             
         except Exception as e:
             logger.error(f"[{thread_name}] Error processing keyword '{keyword}': {e}")
+            
+            # Force save checkpoint on any major error
+            if self.checkpoint_manager and len(scraped_products) > 0:
+                enhanced_metadata['status'] = 'error'
+                enhanced_metadata['error'] = str(e)
+                self.checkpoint_manager.force_save_checkpoint(
+                    keyword, scraped_products, processed_urls, enhanced_metadata
+                )
+            
             # Return partial data if available
             keyword_data = {
                 'scrape_metadata': {
@@ -561,8 +943,10 @@ class NykaaScraper:
                     'keyword': keyword,
                     'total_products': len(scraped_products),
                     'total_reviews': sum(len(p.get('reviews', [])) for p in scraped_products),
-                    'scraper_version': '2.0_optimized',
-                    'error': str(e)
+                    'scraper_version': '2.0_live_checkpoints',
+                    'error': str(e),
+                    'checkpoint_enabled': True,
+                    'resume_available': len(scraped_products) > 0
                 },
                 'products': scraped_products
             }
@@ -820,7 +1204,7 @@ class NykaaScraper:
             return None
 
     def _extract_reviews_with_load_more(self, driver, product_url: str) -> List[Review]:
-        """Enhanced review extraction with proper Load More button handling and JSON parsing"""
+        """Enhanced review extraction with PERSISTENT Load More button handling - NEVER GIVE UP!"""
         reviews = []
         
         try:
@@ -857,65 +1241,289 @@ class NykaaScraper:
             
             logger.info(f"Extracted {len(reviews)} initial reviews from JSON data")
             
-            # Now try to load more reviews by scrolling and clicking Load More
+            # NOW THE PERSISTENT PART - NEVER GIVE UP ON LOAD MORE!
+            total_scroll_time = 0
+            max_scroll_time = 45  # 45 seconds of scrolling!
             load_more_attempts = 0
-            max_load_more_attempts = 50
+            max_load_more_attempts = 100  # More attempts
             consecutive_no_new = 0
             
-            while (load_more_attempts < max_load_more_attempts and 
-                   consecutive_no_new < self.max_consecutive_no_new and
+            logger.info("Starting PERSISTENT Load More detection - will scroll for up to 45 seconds!")
+            
+            while (total_scroll_time < max_scroll_time and 
+                   load_more_attempts < max_load_more_attempts and 
+                   consecutive_no_new < 8 and  # More patience
                    len(reviews) < self.max_reviews_per_product):
                 
-                # Scroll to bottom to trigger Load More button
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                time.sleep(3)  # Wait for button to appear
+                # Check for "No more reviews to show" element FIRST
+                if self._check_no_more_reviews(driver):
+                    logger.info("🛑 Found 'No more reviews to show' - stopping review extraction")
+                    break
                 
-                # Try to click Load More button
-                load_more_clicked = self._click_load_more_button(driver)
+                scroll_start_time = time.time()
                 
-                if load_more_clicked:
-                    load_more_attempts += 1
-                    logger.info(f"Clicked Load More button (attempt {load_more_attempts})")
-                    
-                    # Wait for new content to load
-                    time.sleep(5)
-                    
-                    # Extract new reviews from updated JSON data
-                    current_reviews = self._extract_reviews_from_json(driver)
-                    new_count = 0
-                    
-                    for review in current_reviews:
-                        review_id = f"{review.user_info.username}_{review.rating}_{review.content[:50]}_{review.date}"
-                        if review_id not in seen_reviews:
-                            seen_reviews.add(review_id)
-                            reviews.append(review)
-                            new_count += 1
-                    
-                    logger.info(f"Extracted {new_count} new reviews after Load More (total: {len(reviews)})")
-                    
-                    if new_count == 0:
-                        consecutive_no_new += 1
+                # AGGRESSIVE SCROLLING STRATEGY
+                logger.info(f"Scrolling phase {total_scroll_time + 1}s - looking for Load More button...")
+                
+                # Multiple scroll types in sequence
+                for scroll_type in range(5):  # 5 different scroll strategies
+                    if scroll_type == 0:
+                        # Scroll to absolute bottom
+                        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                    elif scroll_type == 1:
+                        # Scroll by large chunks
+                        driver.execute_script("window.scrollBy(0, window.innerHeight * 2);")
+                    elif scroll_type == 2:
+                        # Smooth scroll to bottom
+                        driver.execute_script("""
+                            window.scrollTo({
+                                top: document.body.scrollHeight,
+                                behavior: 'smooth'
+                            });
+                        """)
+                    elif scroll_type == 3:
+                        # Scroll by viewport increments
+                        for i in range(3):
+                            driver.execute_script("window.scrollBy(0, window.innerHeight);")
+                            time.sleep(0.5)
                     else:
-                        consecutive_no_new = 0
+                        # Final aggressive scroll
+                        driver.execute_script("window.scrollTo(0, document.body.scrollHeight + 1000);")
                     
-                else:
-                    # No Load More button found, try scrolling a bit more
-                    consecutive_no_new += 1
-                    if consecutive_no_new >= 3:
-                        logger.info("No Load More button found and no new reviews - stopping")
+                    time.sleep(2)  # Wait for content to load after each scroll
+                    
+                    # Check again for "No more reviews to show" after each scroll
+                    if self._check_no_more_reviews(driver):
+                        logger.info("🛑 Found 'No more reviews to show' during scrolling - stopping")
+                        total_scroll_time = max_scroll_time  # Force exit
                         break
                     
-                    # Try additional scrolling strategies
-                    driver.execute_script("window.scrollBy(0, window.innerHeight);")
-                    time.sleep(2)
+                    # Try to find Load More button after each scroll
+                    load_more_found = self._click_load_more_button_persistent(driver)
+                    
+                    if load_more_found:
+                        load_more_attempts += 1
+                        logger.info(f"SUCCESS! Clicked Load More button (attempt {load_more_attempts}) after {total_scroll_time}s scrolling")
+                        
+                        # Wait for new content to load
+                        time.sleep(8)  # Longer wait for content
+                        
+                        # Check for "No more reviews" after Load More click
+                        if self._check_no_more_reviews(driver):
+                            logger.info("🛑 Found 'No more reviews to show' after Load More click - stopping")
+                            total_scroll_time = max_scroll_time  # Force exit
+                            break
+                        
+                        # Extract new reviews from updated JSON data
+                        current_reviews = self._extract_reviews_from_json(driver)
+                        new_count = 0
+                        
+                        for review in current_reviews:
+                            review_id = f"{review.user_info.username}_{review.rating}_{review.content[:50]}_{review.date}"
+                            if review_id not in seen_reviews:
+                                seen_reviews.add(review_id)
+                                reviews.append(review)
+                                new_count += 1
+                        
+                        logger.info(f"Extracted {new_count} new reviews after Load More (total: {len(reviews)})")
+                        
+                        if new_count == 0:
+                            consecutive_no_new += 1
+                        else:
+                            consecutive_no_new = 0
+                        
+                        break  # Found Load More, break scroll types loop
+                
+                # Update total scroll time
+                scroll_time_this_round = time.time() - scroll_start_time
+                total_scroll_time += scroll_time_this_round
+                
+                logger.info(f"Scroll round completed. Total scroll time: {total_scroll_time:.1f}s")
+                
+                # If no Load More found in this round, continue scrolling
+                if not load_more_found:
+                    logger.info(f"No Load More found yet after {total_scroll_time:.1f}s - continuing to scroll...")
+                    time.sleep(1)  # Brief pause before next scroll round
+            
+            # Final summary
+            if self._check_no_more_reviews(driver):
+                logger.info("🎯 Stopped because 'No more reviews to show' was found")
+            elif total_scroll_time >= max_scroll_time:
+                logger.info(f"Reached maximum scroll time ({max_scroll_time}s) - stopping")
+            elif load_more_attempts >= max_load_more_attempts:
+                logger.info(f"Reached maximum Load More attempts ({max_load_more_attempts}) - stopping")
+            elif consecutive_no_new >= 8:
+                logger.info(f"No new reviews found in last {consecutive_no_new} attempts - stopping")
             
             logger.info(f"Review extraction completed: {len(reviews)} total reviews")
             logger.info(f"Load More clicks: {load_more_attempts}")
+            logger.info(f"Total scroll time: {total_scroll_time:.1f} seconds")
         
         except Exception as e:
             logger.error(f"Error extracting reviews: {e}")
         
         return reviews[:self.max_reviews_per_product]
+
+    def _check_no_more_reviews(self, driver) -> bool:
+        """Check if 'No more reviews to show' element is present"""
+        try:
+            # Check for the specific "No more reviews to show" element
+            no_more_selectors = [
+                ".css-15xl6yb.eruveen0",  # Exact selector from user
+                "div.css-15xl6yb",
+                ".eruveen0",
+                # Text-based selectors as backup
+                "//div[contains(text(), 'No more reviews to show')]",
+                "//div[contains(text(), 'No more reviews')]",
+                "//div[contains(text(), 'End of reviews')]",
+                "//*[contains(text(), 'No more reviews to show')]"
+            ]
+            
+            for selector in no_more_selectors:
+                try:
+                    if selector.startswith("//"):
+                        # XPath selector
+                        elements = driver.find_elements(By.XPATH, selector)
+                    else:
+                        # CSS selector
+                        elements = driver.find_elements(By.CSS_SELECTOR, selector)
+                    
+                    for element in elements:
+                        if element.is_displayed():
+                            element_text = element.text.strip()
+                            logger.info(f"🛑 Found end indicator: '{element_text}'")
+                            return True
+                            
+                except Exception:
+                    continue
+            
+            return False
+            
+        except Exception as e:
+            logger.debug(f"Error checking for 'No more reviews': {e}")
+            return False
+
+    def _click_load_more_button_persistent(self, driver) -> bool:
+        """PERSISTENT Load More button detection - only click genuine Load More buttons!"""
+        
+        # VERY SPECIFIC Load More selectors - avoid login/signup buttons
+        load_more_selectors = [
+            # Specific selectors based on the provided HTML structure
+            ".css-1a51j15 button.css-u04n34",
+            "div[class*='css-1a51j15'] button[class*='css-u04n34']", 
+            "button.css-u04n34",
+            ".css-1a51j15 button",
+            
+            # Text-based XPath selectors - VERY SPECIFIC for Load More only
+            "//button[text()='Load More']",
+            "//button[text()='LOAD MORE']", 
+            "//button[text()='Show More']",
+            "//button[text()='SHOW MORE']",
+            "//button[text()='View More']",
+            "//button[text()='More Reviews']",
+            "//button[text()='Show more reviews']",
+            "//button[text()='Load more reviews']",
+            
+            # Case insensitive but EXACT text matches
+            "//button[translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='load more']",
+            "//button[translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='show more']",
+            "//button[translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='view more']",
+            "//button[translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='more reviews']",
+            
+            # Aria label based (specific)
+            "//button[@aria-label='Load More']",
+            "//button[@aria-label='Load more']", 
+            "//button[@aria-label='Show More']",
+            "//button[@aria-label='More reviews']",
+            
+            # Class-based but specific to Load More
+            "button[class*='load-more']",
+            "button[class*='show-more']",
+            ".load-more-reviews button",
+            ".more-reviews button",
+            ".load-more button",
+        ]
+        
+        # BLOCKED button texts - never click these!
+        blocked_texts = [
+            'write review', 'sign in', 'sign up', 'login', 'register', 
+            'create account', 'join', 'subscribe', 'follow', 'add to cart',
+            'buy now', 'add to wishlist', 'share', 'report', 'flag',
+            'edit', 'delete', 'reply', 'like', 'dislike', 'helpful',
+            'not helpful', 'sort', 'filter', 'search', 'close', 'back'
+        ]
+        
+        for selector in load_more_selectors:
+            try:
+                if selector.startswith("//"):
+                    # XPath selector
+                    buttons = driver.find_elements(By.XPATH, selector)
+                else:
+                    # CSS selector  
+                    buttons = driver.find_elements(By.CSS_SELECTOR, selector)
+                
+                for button in buttons:
+                    try:
+                        # Check if button is visible and enabled
+                        if button.is_displayed() and button.is_enabled():
+                            # Get button text
+                            button_text = button.text.lower().strip()
+                            
+                            # CRITICAL: Skip blocked buttons (like "Write Review")
+                            if any(blocked_text in button_text for blocked_text in blocked_texts):
+                                logger.debug(f"🚫 Skipping blocked button: '{button.text}'")
+                                continue
+                            
+                            # Only proceed if button text contains EXACT Load More keywords
+                            load_more_keywords = ['load more', 'show more', 'view more', 'more reviews']
+                            if any(keyword in button_text for keyword in load_more_keywords):
+                                
+                                # Double-check: button should not contain blocked words
+                                if any(blocked in button_text for blocked in ['review', 'write', 'sign', 'login']):
+                                    logger.debug(f"🚫 Skipping button with blocked keywords: '{button.text}'")
+                                    continue
+                                
+                                logger.info(f"🎯 Found genuine Load More button: '{button.text}'")
+                                
+                                # Scroll to button to ensure it's in view
+                                driver.execute_script("arguments[0].scrollIntoView({block: 'center', behavior: 'smooth'});", button)
+                                time.sleep(1)
+                                
+                                # Wait for button to be clickable
+                                try:
+                                    WebDriverWait(driver, 3).until(EC.element_to_be_clickable(button))
+                                except TimeoutException:
+                                    pass
+                                
+                                # Try different click methods
+                                try:
+                                    # Method 1: Regular click
+                                    button.click()
+                                    logger.info(f"✅ SUCCESS! Clicked Load More button: '{button.text}'")
+                                    return True
+                                except Exception:
+                                    try:
+                                        # Method 2: JavaScript click
+                                        driver.execute_script("arguments[0].click();", button)
+                                        logger.info(f"✅ SUCCESS! Clicked Load More button via JavaScript: '{button.text}'")
+                                        return True
+                                    except Exception:
+                                        continue
+                            else:
+                                # Log what we're skipping
+                                if button_text and len(button_text) > 0:
+                                    logger.debug(f"🔍 Skipping non-Load More button: '{button.text}'")
+                    except Exception as e:
+                        logger.debug(f"Error checking button: {e}")
+                        continue
+            except Exception as e:
+                logger.debug(f"Error finding buttons with selector {selector}: {e}")
+                continue
+        
+        # REMOVED the "last resort" section that was clicking any button with "load", "more", etc.
+        # This was causing the "Write Review" button to be clicked
+        
+        return False
 
     def _extract_reviews_from_json(self, driver) -> List[Review]:
         """Extract reviews from the embedded JSON data in page source"""
@@ -995,7 +1603,7 @@ class NykaaScraper:
                             return reviews
                     except json.JSONDecodeError:
                         continue
-        
+            
         except Exception as e:
             logger.error(f"Error extracting reviews from JSON: {e}")
         
@@ -1071,109 +1679,6 @@ class NykaaScraper:
         
         return None
 
-    def _click_load_more_button(self, driver) -> bool:
-        """Click the Load More button with enhanced detection and error handling"""
-        
-        # List of selectors to try for Load More button (most specific first)
-        load_more_selectors = [
-            # Specific selectors based on the provided HTML structure
-            ".css-1a51j15 button.css-u04n34",
-            "div[class*='css-1a51j15'] button[class*='css-u04n34']",
-            "button.css-u04n34",
-            ".css-1a51j15 button",
-            
-            # Generic Load More selectors as fallback
-            "button[class*='load-more']",
-            "button[class*='Load']",
-            ".load-more-reviews button",
-            ".load-more button",
-            "button[aria-label*='Load More']",
-            "button[aria-label*='load more']",
-            
-            # Text-based XPath selectors (most reliable)
-            "//button[contains(text(), 'Load More')]",
-            "//button[contains(text(), 'LOAD MORE')]", 
-            "//button[contains(text(), 'Show More')]",
-            "//button[contains(text(), 'View More')]",
-            "//button[contains(text(), 'More Reviews')]",
-            "//a[contains(text(), 'Load More')]",
-            "//a[contains(text(), 'Show More')]",
-            
-            # Generic button patterns
-            "//button[contains(@class, 'load') or contains(@class, 'more')]",
-            "//div[contains(@class, 'load-more')]//button",
-        ]
-        
-        for selector in load_more_selectors:
-            try:
-                if selector.startswith("//"):
-                    # XPath selector
-                    buttons = driver.find_elements(By.XPATH, selector)
-                else:
-                    # CSS selector  
-                    buttons = driver.find_elements(By.CSS_SELECTOR, selector)
-                
-                for button in buttons:
-                    try:
-                        # Check if button is visible and enabled
-                        if button.is_displayed() and button.is_enabled():
-                            # Check button text to confirm it's the right button
-                            button_text = button.text.lower().strip()
-                            if any(keyword in button_text for keyword in ['load more', 'show more', 'view more', 'more reviews']):
-                                # Scroll to button to ensure it's in view
-                                driver.execute_script("arguments[0].scrollIntoView({block: 'center', behavior: 'smooth'});", button)
-                                time.sleep(1)
-                                
-                                # Wait for button to be clickable
-                                try:
-                                    WebDriverWait(driver, 3).until(EC.element_to_be_clickable(button))
-                                except TimeoutException:
-                                    pass
-                                
-                                # Try different click methods
-                                try:
-                                    # Method 1: Regular click
-                                    button.click()
-                                    logger.info(f"Successfully clicked Load More button using selector: {selector}")
-                                    return True
-                                except Exception:
-                                    try:
-                                        # Method 2: JavaScript click
-                                        driver.execute_script("arguments[0].click();", button)
-                                        logger.info(f"Successfully clicked Load More button via JavaScript using selector: {selector}")
-                                        return True
-                                    except Exception:
-                                        continue
-                    except Exception as e:
-                        logger.debug(f"Failed to click button with selector {selector}: {e}")
-                        continue
-            except Exception as e:
-                logger.debug(f"Error finding button with selector {selector}: {e}")
-                continue
-        
-        # If no Load More button found, try looking for pagination or infinite scroll indicators
-        try:
-            # Look for any buttons that might trigger more content loading
-            all_buttons = driver.find_elements(By.TAG_NAME, "button")
-            for button in all_buttons:
-                try:
-                    if button.is_displayed() and button.is_enabled():
-                        button_text = button.text.lower().strip()
-                        if any(keyword in button_text for keyword in ['load', 'more', 'show', 'next']):
-                            logger.info(f"Found potential load more button with text: '{button.text}'")
-                            # Attempt to click it
-                            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
-                            time.sleep(1)
-                            driver.execute_script("arguments[0].click();", button)
-                            logger.info(f"Clicked potential Load More button: '{button.text}'")
-                            return True
-                except Exception:
-                    continue
-        except Exception as e:
-            logger.debug(f"Error in fallback button search: {e}")
-        
-        return False
-
     def _handle_review_page_popups(self, driver):
         """Handle popups that might appear on review pages"""
         popup_selectors = [
@@ -1222,7 +1727,7 @@ class NykaaScraper:
                 });
             """)
             time.sleep(2)
-            
+        
         except Exception as e:
             logger.debug(f"Error during scrolling: {e}")
 
@@ -1396,7 +1901,7 @@ class NykaaScraper:
             logger.debug(f"Error parsing review: {e}")
         
         return None
-    
+
     def _extract_product_id_from_url(self, url: str) -> str:
         """Extract product ID from URL"""
         match = re.search(r'/p/(\d+)', url)
@@ -1410,7 +1915,7 @@ class NykaaScraper:
                 return path.split('/p/')[0]
         except Exception:
             pass
-        return None
+            return None
     
     def _get_text_by_selectors(self, soup, selectors: List[str], default: str = "") -> str:
         """Get text using CSS selectors"""
@@ -1510,8 +2015,107 @@ class NykaaScraper:
         except Exception as e:
             logger.error(f"Error during cleanup: {e}")
 
+def test_review_extraction(product_url: str):
+    """Test review extraction for a specific product URL with detailed logging"""
+    logger.info("=" * 80)
+    logger.info("🧪 REVIEW EXTRACTION TEST MODE")
+    logger.info("=" * 80)
+    logger.info(f"Testing review extraction for: {product_url}")
+    logger.info("This will test the persistent Load More detection (45+ seconds of scrolling)")
+    
+    # Initialize scraper with test settings
+    scraper = NykaaScraper(
+        headless=False,  # Show browser for testing
+        delay_range=(1, 2),  # Faster for testing
+        max_threads=1,
+        max_reviews_per_product=500,  # Try to get many reviews
+        max_scroll_attempts=200,
+        max_consecutive_no_new=15,
+        review_load_wait_time=8,
+        enable_checkpoints=False,  # No checkpoints for testing
+        save_frequency=10
+    )
+    
+    try:
+        start_time = datetime.now()
+        logger.info(f"⏰ Test started at: {start_time}")
+        
+        # Get driver
+        driver = scraper._get_thread_driver()
+        
+        # Test review extraction
+        logger.info("🔍 Starting persistent review extraction...")
+        reviews = scraper._extract_reviews_with_load_more(driver, product_url)
+        
+        end_time = datetime.now()
+        duration = end_time - start_time
+        
+        # Print detailed results
+        logger.info("=" * 80)
+        logger.info("🎯 TEST RESULTS")
+        logger.info("=" * 80)
+        logger.info(f"⏱️  Total time: {duration}")
+        logger.info(f"📊 Reviews extracted: {len(reviews)}")
+        logger.info(f"🎯 Average rating: {sum(r.rating for r in reviews) / len(reviews) if reviews else 0:.1f}")
+        logger.info(f"✅ Verified purchases: {sum(1 for r in reviews if r.verified_purchase)}")
+        
+        if reviews:
+            logger.info("\n📝 SAMPLE REVIEWS:")
+            for i, review in enumerate(reviews[:5]):
+                logger.info(f"\n Review {i+1}:")
+                logger.info(f"   👤 User: {review.user_info.username}")
+                logger.info(f"   ⭐ Rating: {review.rating}/5")
+                logger.info(f"   📝 Title: {review.title}")
+                logger.info(f"   💬 Content: {review.content[:100]}...")
+                logger.info(f"   📅 Date: {review.date}")
+                logger.info(f"   👍 Helpful: {review.helpful_count}")
+                logger.info(f"   ✅ Verified: {review.verified_purchase}")
+        
+        # Save test results to file
+        test_results = {
+            'test_metadata': {
+                'test_url': product_url,
+                'test_date': start_time.isoformat(),
+                'duration_seconds': duration.total_seconds(),
+                'total_reviews': len(reviews)
+            },
+            'reviews': [asdict(review) for review in reviews]
+        }
+        
+        test_filename = f"test_review_extraction_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(test_filename, 'w', encoding='utf-8') as f:
+            json.dump(test_results, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"💾 Test results saved to: {test_filename}")
+        logger.info("=" * 80)
+        
+        if len(reviews) > 0:
+            logger.info("✅ TEST PASSED - Reviews extracted successfully!")
+        else:
+            logger.info("❌ TEST FAILED - No reviews extracted")
+        
+    except Exception as e:
+        logger.error(f"❌ Test failed with error: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        scraper.cleanup()
+
 def main():
     """Main function with comprehensive configuration for large-scale scraping"""
+    
+    import argparse
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Nykaa Product Scraper with Advanced Features')
+    parser.add_argument('--test-review', type=str, metavar='PRODUCT_URL', 
+                       help='Test review extraction for a specific product URL')
+    args = parser.parse_args()
+    
+    # If test-review mode, run review test and exit
+    if args.test_review:
+        test_review_extraction(args.test_review)
+        return
     
     # ========================
     # CONFIGURATION VARIABLES
@@ -1527,7 +2131,7 @@ def main():
 
     # use less than this as there is chance of getting blocked by Nykaa
     MAX_PRODUCTS_PER_KEYWORD = 500
-    MAX_REVIEWS_PER_PRODUCT = 300
+    MAX_REVIEWS_PER_PRODUCT = 500
     
     # === PERFORMANCE CONFIGURATION ===
     MAX_THREADS = 2  # Increase for faster processing (but watch rate limits)
