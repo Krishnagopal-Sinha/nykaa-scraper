@@ -1,0 +1,834 @@
+2025-07-22 17:00:36,459 - INFO - Starting Nykaa scraper...
+2025-07-22 17:00:36,459 - INFO - Starting scrape for keywords: ['lipstick', 'foundation', 'moisturizer', 'sunscreen', 'serum', 'mascara', 'perfume', 'skincare', 'makeup', 'hair oil']
+2025-07-22 17:00:36,479 - INFO - Searching for products with keyword: 'lipstick'
+2025-07-22 17:00:36,479 - INFO - ====== WebDriver manager ======
+2025-07-22 17:00:36,793 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:36,972 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:37,111 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:00:37,122 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:37,467 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:00:37,469 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:00:37,469 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:00:37,597 - INFO - Driver downloading response is 200
+2025-07-22 17:00:40,137 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:40,345 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:00:40,350 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:40,350 - ERROR - Error searching for keyword 'lipstick': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:40,350 - INFO - Searching for products with keyword: 'foundation'
+2025-07-22 17:00:40,351 - INFO - ====== WebDriver manager ======
+2025-07-22 17:00:40,505 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:40,635 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:40,787 - INFO - Driver [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver] found in cache
+2025-07-22 17:00:40,793 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:40,793 - ERROR - Error searching for keyword 'foundation': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:40,794 - INFO - Searching for products with keyword: 'moisturizer'
+2025-07-22 17:00:40,794 - INFO - ====== WebDriver manager ======
+2025-07-22 17:00:40,894 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:41,007 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:41,139 - INFO - Driver [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver] found in cache
+2025-07-22 17:00:41,142 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:41,142 - ERROR - Error searching for keyword 'moisturizer': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:41,142 - INFO - Searching for products with keyword: 'sunscreen'
+2025-07-22 17:00:41,143 - INFO - ====== WebDriver manager ======
+2025-07-22 17:00:41,237 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:41,354 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:41,524 - INFO - Driver [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver] found in cache
+2025-07-22 17:00:41,534 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:41,535 - ERROR - Error searching for keyword 'sunscreen': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:41,536 - INFO - Searching for products with keyword: 'serum'
+2025-07-22 17:00:41,536 - INFO - ====== WebDriver manager ======
+2025-07-22 17:00:41,644 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:41,767 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:41,898 - INFO - Driver [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver] found in cache
+2025-07-22 17:00:41,905 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:41,905 - ERROR - Error searching for keyword 'serum': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:41,906 - INFO - Searching for products with keyword: 'mascara'
+2025-07-22 17:00:41,906 - INFO - ====== WebDriver manager ======
+2025-07-22 17:00:42,009 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:42,118 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:42,245 - INFO - Driver [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver] found in cache
+2025-07-22 17:00:42,249 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:42,249 - ERROR - Error searching for keyword 'mascara': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:42,250 - INFO - Searching for products with keyword: 'perfume'
+2025-07-22 17:00:42,250 - INFO - ====== WebDriver manager ======
+2025-07-22 17:00:42,349 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:42,484 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:42,649 - INFO - Driver [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver] found in cache
+2025-07-22 17:00:42,656 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:42,657 - ERROR - Error searching for keyword 'perfume': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:42,658 - INFO - Searching for products with keyword: 'skincare'
+2025-07-22 17:00:42,658 - INFO - ====== WebDriver manager ======
+2025-07-22 17:00:42,766 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:42,900 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:43,056 - INFO - Driver [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver] found in cache
+2025-07-22 17:00:43,063 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:43,063 - ERROR - Error searching for keyword 'skincare': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:43,064 - INFO - Searching for products with keyword: 'makeup'
+2025-07-22 17:00:43,065 - INFO - ====== WebDriver manager ======
+2025-07-22 17:00:43,174 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:43,292 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:43,421 - INFO - Driver [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver] found in cache
+2025-07-22 17:00:43,426 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:43,427 - ERROR - Error searching for keyword 'makeup': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:43,428 - INFO - Searching for products with keyword: 'hair oil'
+2025-07-22 17:00:43,428 - INFO - ====== WebDriver manager ======
+2025-07-22 17:00:43,530 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:43,669 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:00:43,828 - INFO - Driver [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver] found in cache
+2025-07-22 17:00:43,834 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:43,835 - ERROR - Error searching for keyword 'hair oil': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:00:43,836 - INFO - Found 0 unique products to scrape
+2025-07-22 17:00:43,837 - INFO - Scraping completed. Total products: 0
+2025-07-22 17:00:43,838 - INFO - Data saved to nykaa_scraped_data_20250722_170043.json
+2025-07-22 17:00:43,838 - INFO - Summary report saved to nykaa_scraped_data_20250722_170043_summary.txt
+2025-07-22 17:00:43,838 - INFO - Scraping completed successfully!
+2025-07-22 17:00:43,838 - INFO - Cleanup completed
+2025-07-22 17:03:34,405 - INFO - Starting Nykaa scraper...
+2025-07-22 17:03:34,405 - INFO - Starting scrape for keywords: ['lipstick', 'foundation', 'moisturizer', 'sunscreen', 'serum', 'mascara', 'perfume', 'skincare', 'makeup', 'hair oil']
+2025-07-22 17:03:34,418 - INFO - Searching for products with keyword: 'lipstick'
+2025-07-22 17:03:34,418 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:03:34,424 - INFO - ====== WebDriver manager ======
+2025-07-22 17:03:34,594 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:34,730 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:34,876 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:03:34,884 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:35,464 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:03:35,467 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:03:35,467 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:03:35,616 - INFO - Driver downloading response is 200
+2025-07-22 17:03:38,111 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:38,352 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:03:38,353 - INFO - Using ChromeDriver from webdriver-manager: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:03:38,356 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:03:38,356 - ERROR - Error searching for keyword 'lipstick': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:03:38,356 - INFO - Searching for products with keyword: 'foundation'
+2025-07-22 17:03:38,356 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:03:38,357 - INFO - ====== WebDriver manager ======
+2025-07-22 17:03:38,443 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:38,580 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:38,726 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:03:38,726 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:39,096 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:03:39,099 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:03:39,099 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:03:39,220 - INFO - Driver downloading response is 200
+2025-07-22 17:03:41,735 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:41,999 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:03:42,000 - INFO - Using ChromeDriver from webdriver-manager: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:03:42,008 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:03:42,008 - ERROR - Error searching for keyword 'foundation': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:03:42,008 - INFO - Searching for products with keyword: 'moisturizer'
+2025-07-22 17:03:42,009 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:03:42,010 - INFO - ====== WebDriver manager ======
+2025-07-22 17:03:42,100 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:42,228 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:42,405 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:03:42,406 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:42,785 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:03:42,789 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:03:42,789 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:03:42,917 - INFO - Driver downloading response is 200
+2025-07-22 17:03:45,539 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:45,742 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:03:45,743 - INFO - Using ChromeDriver from webdriver-manager: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:03:45,745 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:03:45,745 - ERROR - Error searching for keyword 'moisturizer': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:03:45,745 - INFO - Searching for products with keyword: 'sunscreen'
+2025-07-22 17:03:45,745 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:03:45,746 - INFO - ====== WebDriver manager ======
+2025-07-22 17:03:45,839 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:45,989 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:46,135 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:03:46,135 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:46,595 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:03:46,598 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:03:46,598 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:03:46,702 - INFO - Driver downloading response is 200
+2025-07-22 17:03:49,283 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:49,563 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:03:49,564 - INFO - Using ChromeDriver from webdriver-manager: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:03:49,567 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:03:49,568 - ERROR - Error searching for keyword 'sunscreen': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:03:49,568 - INFO - Searching for products with keyword: 'serum'
+2025-07-22 17:03:49,568 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:03:49,569 - INFO - ====== WebDriver manager ======
+2025-07-22 17:03:49,669 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:49,800 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:49,944 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:03:49,944 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:50,312 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:03:50,314 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:03:50,314 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:03:50,402 - INFO - Driver downloading response is 200
+2025-07-22 17:03:52,929 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:53,153 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:03:53,155 - INFO - Using ChromeDriver from webdriver-manager: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:03:53,159 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:03:53,159 - ERROR - Error searching for keyword 'serum': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:03:53,160 - INFO - Searching for products with keyword: 'mascara'
+2025-07-22 17:03:53,160 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:03:53,161 - INFO - ====== WebDriver manager ======
+2025-07-22 17:03:53,251 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:53,408 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:53,542 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:03:53,542 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:53,923 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:03:53,926 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:03:53,927 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:03:54,033 - INFO - Driver downloading response is 200
+2025-07-22 17:03:56,535 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:56,767 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:03:56,768 - INFO - Using ChromeDriver from webdriver-manager: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:03:56,776 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:03:56,776 - ERROR - Error searching for keyword 'mascara': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:03:56,776 - INFO - Searching for products with keyword: 'perfume'
+2025-07-22 17:03:56,776 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:03:56,778 - INFO - ====== WebDriver manager ======
+2025-07-22 17:03:56,865 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:57,024 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:57,204 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:03:57,205 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:03:57,675 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:03:57,678 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:03:57,678 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:03:57,779 - INFO - Driver downloading response is 200
+2025-07-22 17:04:00,506 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:04:00,708 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:04:00,709 - INFO - Using ChromeDriver from webdriver-manager: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:04:00,712 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:04:00,712 - ERROR - Error searching for keyword 'perfume': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:04:00,712 - INFO - Searching for products with keyword: 'skincare'
+2025-07-22 17:04:00,712 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:04:00,713 - INFO - ====== WebDriver manager ======
+2025-07-22 17:04:00,801 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:04:00,935 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:04:01,068 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:04:01,068 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:04:02,448 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:04:02,450 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:04:02,450 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:04:02,538 - INFO - Driver downloading response is 200
+2025-07-22 17:04:05,315 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:04:05,520 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:04:05,521 - INFO - Using ChromeDriver from webdriver-manager: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:04:05,530 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:04:05,530 - ERROR - Error searching for keyword 'skincare': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:04:05,531 - INFO - Searching for products with keyword: 'makeup'
+2025-07-22 17:04:05,531 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:04:05,532 - INFO - ====== WebDriver manager ======
+2025-07-22 17:04:05,625 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:04:05,756 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:04:05,901 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:04:05,901 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:04:06,244 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:04:06,247 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:04:06,247 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:04:06,343 - INFO - Driver downloading response is 200
+2025-07-22 17:04:08,853 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:04:09,093 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:04:09,094 - INFO - Using ChromeDriver from webdriver-manager: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:04:09,097 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:04:09,097 - ERROR - Error searching for keyword 'makeup': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:04:09,097 - INFO - Searching for products with keyword: 'hair oil'
+2025-07-22 17:04:09,098 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:04:09,099 - INFO - ====== WebDriver manager ======
+2025-07-22 17:04:09,187 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:04:09,299 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:04:09,419 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:04:09,419 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:04:09,795 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:04:09,797 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:04:09,797 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:04:09,891 - INFO - Driver downloading response is 200
+2025-07-22 17:04:12,557 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:04:12,790 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:04:12,791 - INFO - Using ChromeDriver from webdriver-manager: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:04:12,798 - ERROR - Failed to setup WebDriver: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:04:12,798 - ERROR - Error searching for keyword 'hair oil': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 17:04:12,798 - INFO - Found 0 unique products to scrape
+2025-07-22 17:04:12,798 - INFO - Scraping completed. Total products: 0
+2025-07-22 17:04:12,799 - INFO - Data saved to nykaa_scraped_data_20250722_170412.json
+2025-07-22 17:04:12,799 - INFO - Summary report saved to nykaa_scraped_data_20250722_170412_summary.txt
+2025-07-22 17:04:12,799 - INFO - Scraping completed successfully!
+2025-07-22 17:04:12,799 - INFO - Cleanup completed
+2025-07-22 17:05:51,471 - INFO - Starting Nykaa scraper...
+2025-07-22 17:05:51,472 - INFO - Starting scrape for keywords: ['lipstick', 'foundation', 'moisturizer', 'sunscreen', 'serum', 'mascara', 'perfume', 'skincare', 'makeup', 'hair oil']
+2025-07-22 17:05:51,486 - INFO - Searching for products with keyword: 'lipstick'
+2025-07-22 17:05:51,486 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:05:51,493 - INFO - ====== WebDriver manager ======
+2025-07-22 17:05:51,676 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:05:51,840 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:05:51,957 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:05:51,966 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:05:52,323 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:05:52,325 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:05:52,325 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:05:52,412 - INFO - Driver downloading response is 200
+2025-07-22 17:05:54,979 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:05:55,203 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:05:55,204 - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:05:55,204 - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 17:05:55,204 - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:05:55,204 - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:05:55,221 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 17:05:55,221 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 17:05:55,261 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 17:05:55,261 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 17:05:55,585 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 17:05:55,585 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:05:58,290 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 17:07:06,112 - ERROR - Failed to setup WebDriver: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2025-07-22 17:07:06,113 - ERROR - Error searching for keyword 'lipstick': ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2025-07-22 17:07:06,115 - INFO - Searching for products with keyword: 'foundation'
+2025-07-22 17:07:06,117 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:07:06,125 - INFO - ====== WebDriver manager ======
+2025-07-22 17:07:06,297 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:07:06,503 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:07:06,632 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:07:06,632 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:07:06,991 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:07:06,994 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:07:06,994 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:07:07,158 - INFO - Driver downloading response is 200
+2025-07-22 17:07:09,632 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:07:09,842 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:07:09,843 - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:07:09,843 - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 17:07:09,844 - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:07:09,844 - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:07:09,849 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 17:07:09,850 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 17:07:09,877 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 17:07:09,877 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 17:07:09,957 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 17:07:09,958 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:07:12,688 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 17:07:14,497 - INFO - WebDriver setup completed successfully
+2025-07-22 17:07:17,413 - INFO - Scraping page 1 for keyword 'foundation'
+2025-07-22 17:07:27,704 - WARNING - No products found on page 1
+2025-07-22 17:07:27,705 - INFO - Found 0 product URLs for keyword 'foundation'
+2025-07-22 17:07:30,110 - INFO - Searching for products with keyword: 'moisturizer'
+2025-07-22 17:07:34,062 - INFO - Scraping page 1 for keyword 'moisturizer'
+2025-07-22 17:07:44,329 - WARNING - No products found on page 1
+2025-07-22 17:07:44,330 - INFO - Found 0 product URLs for keyword 'moisturizer'
+2025-07-22 17:07:47,183 - INFO - Searching for products with keyword: 'sunscreen'
+2025-07-22 17:07:49,821 - INFO - Scraping page 1 for keyword 'sunscreen'
+2025-07-22 17:08:00,056 - WARNING - No products found on page 1
+2025-07-22 17:08:00,056 - INFO - Found 0 product URLs for keyword 'sunscreen'
+2025-07-22 17:08:02,588 - INFO - Searching for products with keyword: 'serum'
+2025-07-22 17:08:05,539 - INFO - Scraping interrupted by user
+2025-07-22 17:08:05,542 - WARNING - Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10b06c890>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/d6e1647079a07eb6860f031fdce771f9
+2025-07-22 17:08:05,545 - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10b06e750>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/d6e1647079a07eb6860f031fdce771f9
+2025-07-22 17:08:05,548 - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10b06e3d0>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/d6e1647079a07eb6860f031fdce771f9
+2025-07-22 17:08:05,549 - INFO - Cleanup completed
+2025-07-22 17:11:58,307 - INFO - Searching for products with keyword: 'lipstick'
+2025-07-22 17:11:58,307 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:11:58,310 - INFO - ====== WebDriver manager ======
+2025-07-22 17:11:58,533 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:11:58,734 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:11:58,869 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:11:58,879 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:11:59,285 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:11:59,288 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:11:59,288 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:11:59,425 - INFO - Driver downloading response is 200
+2025-07-22 17:12:01,943 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:12:02,131 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:12:02,132 - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:12:02,132 - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 17:12:02,132 - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:12:02,132 - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:12:02,138 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 17:12:02,138 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 17:12:02,169 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 17:12:02,169 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 17:12:02,274 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 17:12:02,274 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:12:04,978 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 17:12:07,008 - INFO - WebDriver setup completed successfully
+2025-07-22 17:12:10,015 - INFO - Scraping page 1 for keyword 'lipstick'
+2025-07-22 17:12:10,031 - INFO - Found 20 product links using selector: .css-qlopj4
+2025-07-22 17:12:11,238 - INFO - Found 5 product URLs for keyword 'lipstick'
+2025-07-22 17:13:00,319 - INFO - Starting scrape for keywords: ['lipstick', 'foundation']
+2025-07-22 17:13:00,333 - INFO - Searching for products with keyword: 'lipstick'
+2025-07-22 17:13:00,333 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:13:00,337 - INFO - ====== WebDriver manager ======
+2025-07-22 17:13:00,573 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:13:00,703 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:13:00,824 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:13:00,832 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:13:01,166 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:13:01,168 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:13:01,168 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:13:01,250 - INFO - Driver downloading response is 200
+2025-07-22 17:13:03,853 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:13:04,103 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:13:04,104 - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:13:04,104 - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 17:13:04,104 - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:13:04,104 - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:13:04,117 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 17:13:04,117 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 17:13:04,145 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 17:13:04,145 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 17:13:04,279 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 17:13:04,279 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:13:07,022 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 17:13:08,854 - INFO - WebDriver setup completed successfully
+2025-07-22 17:13:10,566 - INFO - Scraping page 1 for keyword 'lipstick'
+2025-07-22 17:13:10,578 - INFO - Found 20 product links using selector: .css-qlopj4
+2025-07-22 17:13:11,889 - INFO - Found 3 product URLs for keyword 'lipstick'
+2025-07-22 17:13:12,997 - INFO - Searching for products with keyword: 'foundation'
+2025-07-22 17:13:15,340 - INFO - Scraping page 1 for keyword 'foundation'
+2025-07-22 17:13:15,353 - INFO - Found 20 product links using selector: .css-qlopj4
+2025-07-22 17:13:16,553 - INFO - Found 3 product URLs for keyword 'foundation'
+2025-07-22 17:13:18,219 - INFO - Found 6 unique products to scrape
+2025-07-22 17:13:18,220 - INFO - Scraping product: https://www.nykaa.com/m-a-c-macximal-matte-lipstick/p/13784071
+2025-07-22 17:13:25,490 - INFO - Successfully scraped product: M.A.C MACximal Matte Lipstick - Ruby Woo(3.5g)
+2025-07-22 17:13:26,512 - INFO - Scraping product: https://www.nykaa.com/maybelline-new-york-superstay-vinyl-ink-liquid-lipstick/p/7066987
+2025-07-22 17:13:33,430 - INFO - Successfully scraped product: Maybelline New York Super Stay Vinyl Ink Liquid Lipstick, Instant Shine Lasts Up To 16H - Charmed(4.2ml)
+2025-07-22 17:13:34,607 - INFO - Scraping product: https://www.nykaa.com/nykaa-matte-to-last-liquid-lipstick/p/303851
+2025-07-22 17:13:40,969 - INFO - Successfully scraped product: Nykaa Matte To Last ! Liquid Lipstick- Jaanvi - 23(6.2ml)
+2025-07-22 17:13:42,054 - INFO - Scraping product: https://www.nykaa.com/maybelline-new-york-super-stay-lumi-matte-liquid-foundation/p/14527793
+2025-07-22 17:13:47,926 - INFO - Successfully scraped product: Maybelline New York Super Stay Lumi-Matte Liquid Foundation - 115, 30H Wear, Transfer Proof(35ml)
+2025-07-22 17:13:49,816 - INFO - Scraping product: https://www.nykaa.com/m-a-cstudio-fix-fluid-spf-15-foundation/p/14327558
+2025-07-22 17:13:56,584 - INFO - Successfully scraped product: M.A.C Studio Fix Fluid SPF 15 Soft Matte Foundation With Hyaluronic Acid - NC20(30ml)
+2025-07-22 17:13:58,566 - INFO - Scraping product: https://www.nykaa.com/kay-beauty-hydrating-foundation/p/1229442
+2025-07-22 17:14:04,982 - INFO - Successfully scraped product: Kay Beauty Hydrating Foundation - 120Y Light(30g)
+2025-07-22 17:14:06,720 - INFO - Scraping completed. Total products: 6
+2025-07-22 17:14:06,722 - INFO - Data saved to test_nykaa_scraped_data.json
+2025-07-22 17:14:06,722 - INFO - Summary report saved to test_nykaa_scraped_data_summary.txt
+2025-07-22 17:20:50,984 - INFO - Starting scrape for keywords: ['lipstick', 'foundation']
+2025-07-22 17:20:50,998 - INFO - Searching for products with keyword: 'lipstick'
+2025-07-22 17:20:50,998 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:20:51,001 - INFO - ====== WebDriver manager ======
+2025-07-22 17:20:51,236 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:20:51,390 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:20:51,535 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:20:51,542 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:20:51,948 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:20:51,951 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:20:51,951 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:20:52,106 - INFO - Driver downloading response is 200
+2025-07-22 17:20:54,612 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:20:54,829 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:20:54,830 - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:20:54,831 - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 17:20:54,831 - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:20:54,831 - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:20:54,836 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 17:20:54,836 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 17:20:54,862 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 17:20:54,862 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 17:20:54,983 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 17:20:54,983 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:20:57,732 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 17:20:59,522 - INFO - WebDriver setup completed successfully
+2025-07-22 17:21:02,322 - INFO - Scraping page 1 for keyword 'lipstick'
+2025-07-22 17:21:02,337 - INFO - Found 20 product links using selector: .css-qlopj4
+2025-07-22 17:21:03,874 - INFO - Found 3 product URLs for keyword 'lipstick'
+2025-07-22 17:21:05,800 - INFO - Searching for products with keyword: 'foundation'
+2025-07-22 17:21:07,749 - INFO - Scraping page 1 for keyword 'foundation'
+2025-07-22 17:21:07,759 - INFO - Found 20 product links using selector: .css-qlopj4
+2025-07-22 17:21:09,577 - INFO - Found 3 product URLs for keyword 'foundation'
+2025-07-22 17:21:10,978 - INFO - Found 6 unique products to scrape
+2025-07-22 17:21:10,979 - INFO - Scraping product: https://www.nykaa.com/m-a-c-macximal-matte-lipstick/p/13784071
+2025-07-22 17:21:14,861 - WARNING - Failed to parse JSON from script tag: Unterminated string starting at: line 1 column 200821 (char 200820)
+2025-07-22 17:21:14,861 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 17:21:16,198 - WARNING - Error parsing reviews from JSON: Expecting ',' delimiter: line 1 column 967 (char 966)
+2025-07-22 17:21:16,198 - INFO - No reviews found in JSON, trying HTML extraction
+2025-07-22 17:21:18,664 - INFO - Total reviews extracted: 0
+2025-07-22 17:21:18,664 - INFO - Successfully scraped product: M.A.C MACximal Matte Lipstick - Ruby Woo(3.5g)
+2025-07-22 17:21:19,715 - INFO - Scraping product: https://www.nykaa.com/maybelline-new-york-superstay-vinyl-ink-liquid-lipstick/p/7066987
+2025-07-22 17:21:22,271 - WARNING - Failed to parse JSON from script tag: Unterminated string starting at: line 1 column 205713 (char 205712)
+2025-07-22 17:21:22,272 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 17:21:23,838 - WARNING - Error parsing reviews from JSON: Expecting ',' delimiter: line 1 column 1228 (char 1227)
+2025-07-22 17:21:23,838 - INFO - No reviews found in JSON, trying HTML extraction
+2025-07-22 17:21:25,505 - INFO - Total reviews extracted: 0
+2025-07-22 17:21:25,505 - INFO - Successfully scraped product: Maybelline New York Super Stay Vinyl Ink Liquid Lipstick, Instant Shine Lasts Up To 16H - Charmed(4.2ml)
+2025-07-22 17:21:27,465 - INFO - Scraping product: https://www.nykaa.com/nykaa-matte-to-last-liquid-lipstick/p/303851
+2025-07-22 17:21:30,242 - WARNING - Failed to parse JSON from script tag: Unterminated string starting at: line 1 column 220325 (char 220324)
+2025-07-22 17:21:30,242 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 17:21:31,725 - WARNING - Error parsing reviews from JSON: Expecting ',' delimiter: line 1 column 978 (char 977)
+2025-07-22 17:21:31,726 - INFO - No reviews found in JSON, trying HTML extraction
+2025-07-22 17:21:33,531 - WARNING - Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ConnectionResetError(54, 'Connection reset by peer')': /session/748494b2a5f01f20e3c5a38678f52358
+2025-07-22 17:21:33,534 - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x106b06210>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/748494b2a5f01f20e3c5a38678f52358
+2025-07-22 17:21:33,534 - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x106b07750>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/748494b2a5f01f20e3c5a38678f52358
+2025-07-22 17:33:07,564 - INFO - Scraping product: https://www.nykaa.com/m-a-c-macximal-matte-lipstick/p/13784071
+2025-07-22 17:33:07,564 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:33:07,571 - INFO - ====== WebDriver manager ======
+2025-07-22 17:33:07,968 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:33:08,407 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:33:08,587 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:33:08,595 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:33:09,097 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:33:09,100 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:33:09,100 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:33:09,269 - INFO - Driver downloading response is 200
+2025-07-22 17:33:11,957 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:33:12,159 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:33:12,160 - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:33:12,160 - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 17:33:12,160 - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:33:12,160 - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:33:12,169 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 17:33:12,169 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 17:33:12,205 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 17:33:12,205 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 17:33:12,556 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 17:33:12,556 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:33:15,487 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 17:33:17,370 - INFO - WebDriver setup completed successfully
+2025-07-22 17:33:20,831 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 200813 (char 200812)
+2025-07-22 17:33:20,831 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 17:33:22,131 - INFO - Extracted product ID from URL pattern '/p/(\d+)': 13784071
+2025-07-22 17:33:22,298 - INFO - Final extracted IDs - Product ID: 13784071, SKU ID: None
+2025-07-22 17:33:22,299 - INFO - Navigating to reviews page: https://www.nykaa.com/m-a-c-macximal-matte-lipstick/reviews/13784071?ptype=reviews
+2025-07-22 17:33:26,082 - INFO - Scroll 1: Found 0 reviews, 0 new
+2025-07-22 17:33:30,689 - INFO - Scroll 2: Found 0 reviews, 0 new
+2025-07-22 17:33:35,122 - INFO - Scroll 3: Found 0 reviews, 0 new
+2025-07-22 17:33:39,649 - INFO - Scroll 4: Found 0 reviews, 0 new
+2025-07-22 17:33:43,775 - INFO - Scroll 5: Found 0 reviews, 0 new
+2025-07-22 17:33:47,590 - INFO - Completed review extraction with infinite scroll. Total reviews: 0
+2025-07-22 17:33:47,590 - INFO - Falling back to current page review extraction
+2025-07-22 17:33:47,802 - INFO - Extracted 5 reviews from JSON data
+2025-07-22 17:33:47,802 - INFO - Total reviews extracted from current page: 5
+2025-07-22 17:33:47,802 - INFO - Successfully scraped product: M.A.C MACximal Matte Lipstick - Ruby Woo(3.5g)
+2025-07-22 17:34:37,888 - INFO - Starting scrape for keywords: ['lipstick']
+2025-07-22 17:34:37,902 - INFO - Searching for products with keyword: 'lipstick'
+2025-07-22 17:34:37,902 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:34:37,907 - INFO - ====== WebDriver manager ======
+2025-07-22 17:34:38,128 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:34:38,261 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:34:38,389 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:34:38,398 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:34:38,750 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:34:38,753 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:34:38,753 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:34:38,855 - INFO - Driver downloading response is 200
+2025-07-22 17:34:41,345 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:34:41,596 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:34:41,597 - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:34:41,598 - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 17:34:41,598 - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:34:41,598 - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:34:41,602 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 17:34:41,603 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 17:34:41,639 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 17:34:41,639 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 17:34:41,736 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 17:34:41,736 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:34:44,522 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 17:34:46,470 - INFO - WebDriver setup completed successfully
+2025-07-22 17:34:48,831 - INFO - Scraping page 1 for keyword 'lipstick'
+2025-07-22 17:34:48,844 - INFO - Found 20 product links using selector: .css-qlopj4
+2025-07-22 17:34:50,610 - INFO - Found 2 product URLs for keyword 'lipstick'
+2025-07-22 17:34:52,381 - INFO - Found 2 unique products to scrape
+2025-07-22 17:34:52,382 - INFO - Scraping product: https://www.nykaa.com/m-a-c-macximal-matte-lipstick/p/13784071
+2025-07-22 17:34:54,781 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 200821 (char 200820)
+2025-07-22 17:34:54,781 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 17:34:56,153 - INFO - Extracted product ID from URL pattern '/p/(\d+)': 13784071
+2025-07-22 17:34:56,338 - INFO - Final extracted IDs - Product ID: 13784071, SKU ID: None
+2025-07-22 17:34:56,338 - INFO - Navigating to reviews page: https://www.nykaa.com/m-a-c-macximal-matte-lipstick/reviews/13784071?ptype=reviews
+2025-07-22 17:34:58,999 - INFO - Scroll 1: Found 0 reviews, 0 new
+2025-07-22 17:35:02,352 - INFO - Scroll 2: Found 0 reviews, 0 new
+2025-07-22 17:35:05,979 - INFO - Scroll 3: Found 0 reviews, 0 new
+2025-07-22 17:35:09,544 - INFO - Scroll 4: Found 0 reviews, 0 new
+2025-07-22 17:35:12,705 - INFO - Scroll 5: Found 0 reviews, 0 new
+2025-07-22 17:35:15,153 - INFO - Completed review extraction with infinite scroll. Total reviews: 0
+2025-07-22 17:35:15,154 - INFO - Falling back to current page review extraction
+2025-07-22 17:35:15,381 - INFO - Extracted 5 reviews from JSON data
+2025-07-22 17:35:15,381 - INFO - Total reviews extracted from current page: 5
+2025-07-22 17:35:15,381 - INFO - Successfully scraped product: M.A.C MACximal Matte Lipstick - Ruby Woo(3.5g)
+2025-07-22 17:35:17,172 - INFO - Scraping product: https://www.nykaa.com/maybelline-new-york-superstay-vinyl-ink-liquid-lipstick/p/7066987
+2025-07-22 17:35:19,406 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 205713 (char 205712)
+2025-07-22 17:35:19,406 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 17:35:20,856 - INFO - Extracted product ID from URL pattern '/p/(\d+)': 7066987
+2025-07-22 17:35:21,060 - INFO - Final extracted IDs - Product ID: 7066987, SKU ID: None
+2025-07-22 17:35:21,060 - INFO - Navigating to reviews page: https://www.nykaa.com/maybelline-new-york-superstay-vinyl-ink-liquid-lipstick/reviews/7066987?ptype=reviews
+2025-07-22 17:35:23,973 - INFO - Scroll 1: Found 0 reviews, 0 new
+2025-07-22 17:35:27,916 - INFO - Scroll 2: Found 0 reviews, 0 new
+2025-07-22 17:35:31,550 - INFO - Scroll 3: Found 0 reviews, 0 new
+2025-07-22 17:35:35,396 - INFO - Scroll 4: Found 0 reviews, 0 new
+2025-07-22 17:35:38,794 - INFO - Scroll 5: Found 0 reviews, 0 new
+2025-07-22 17:35:41,206 - INFO - Completed review extraction with infinite scroll. Total reviews: 0
+2025-07-22 17:35:41,207 - INFO - Falling back to current page review extraction
+2025-07-22 17:35:41,415 - INFO - Extracted 5 reviews from JSON data
+2025-07-22 17:35:41,415 - INFO - Total reviews extracted from current page: 5
+2025-07-22 17:35:41,415 - INFO - Successfully scraped product: Maybelline New York Super Stay Vinyl Ink Liquid Lipstick, Instant Shine Lasts Up To 16H - Charmed(4.2ml)
+2025-07-22 17:35:42,788 - INFO - Scraping completed. Total products: 2
+2025-07-22 17:35:42,790 - INFO - Data saved to comprehensive_test_nykaa_data.json
+2025-07-22 17:35:42,790 - INFO - Summary report saved to comprehensive_test_nykaa_data_summary.txt
+2025-07-22 17:37:05,961 - INFO - Starting Nykaa scraper...
+2025-07-22 17:37:05,961 - INFO - Starting scrape for keywords: ['lipstick']
+2025-07-22 17:37:05,975 - INFO - Searching for products with keyword: 'lipstick'
+2025-07-22 17:37:05,975 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:37:05,979 - INFO - ====== WebDriver manager ======
+2025-07-22 17:37:06,208 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:37:06,428 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:37:06,596 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:37:06,602 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:37:07,162 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:37:07,166 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:37:07,166 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:37:07,288 - INFO - Driver downloading response is 200
+2025-07-22 17:37:09,781 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:37:09,990 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:37:09,993 - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:37:09,993 - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 17:37:09,994 - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:37:09,994 - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:37:10,001 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 17:37:10,001 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 17:37:10,033 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 17:37:10,034 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 17:37:10,182 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 17:37:10,182 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:37:13,275 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 17:37:15,072 - INFO - WebDriver setup completed successfully
+2025-07-22 17:37:18,659 - INFO - Scraping page 1 for keyword 'lipstick'
+2025-07-22 17:37:18,748 - INFO - Found 20 product links using selector: .css-qlopj4
+2025-07-22 17:37:22,678 - INFO - Found 10 product URLs for keyword 'lipstick'
+2025-07-22 17:37:25,478 - INFO - Found 10 unique products to scrape
+2025-07-22 17:37:25,479 - INFO - Scraping product: https://www.nykaa.com/m-a-c-macximal-matte-lipstick/p/13784071
+2025-07-22 17:37:30,926 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 200815 (char 200814)
+2025-07-22 17:37:30,926 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 17:37:32,047 - INFO - Extracted product ID from URL pattern '/p/(\d+)': 13784071
+2025-07-22 17:37:32,215 - INFO - Final extracted IDs - Product ID: 13784071, SKU ID: None
+2025-07-22 17:37:32,215 - INFO - Navigating to reviews page: https://www.nykaa.com/m-a-c-macximal-matte-lipstick/reviews/13784071?ptype=reviews
+2025-07-22 17:37:36,547 - INFO - Scroll 1: Found 0 reviews, 0 new
+2025-07-22 17:37:41,732 - INFO - Scroll 2: Found 0 reviews, 0 new
+2025-07-22 17:37:46,270 - INFO - Scroll 3: Found 0 reviews, 0 new
+2025-07-22 17:37:52,406 - INFO - Scroll 4: Found 0 reviews, 0 new
+2025-07-22 17:37:55,701 - INFO - Scraping interrupted by user
+2025-07-22 17:37:55,715 - WARNING - Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x105de6910>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/477c18c3ff2de47e0ed9f06303cc85b8
+2025-07-22 17:37:55,718 - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10ac58ed0>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/477c18c3ff2de47e0ed9f06303cc85b8
+2025-07-22 17:37:55,719 - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10b8b3710>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/477c18c3ff2de47e0ed9f06303cc85b8
+2025-07-22 17:37:55,739 - INFO - Cleanup completed
+2025-07-22 17:54:06,232 - INFO - Starting Nykaa scraper...
+2025-07-22 17:54:06,232 - INFO - Starting scrape for keywords: ['lipstick']
+2025-07-22 17:54:06,245 - INFO - Searching for products with keyword: 'lipstick'
+2025-07-22 17:54:06,246 - INFO - Clearing webdriver-manager cache...
+2025-07-22 17:54:06,250 - INFO - ====== WebDriver manager ======
+2025-07-22 17:54:06,518 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:54:06,742 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:54:06,873 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 17:54:06,881 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:54:07,531 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 17:54:07,558 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:54:07,558 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:54:07,720 - INFO - Driver downloading response is 200
+2025-07-22 17:54:10,267 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 17:54:10,521 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 17:54:10,522 - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:54:10,522 - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 17:54:10,522 - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:54:10,522 - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 17:54:10,530 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 17:54:10,530 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 17:54:10,568 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 17:54:10,568 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 17:54:10,664 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 17:54:10,664 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 17:54:13,491 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 17:54:15,376 - INFO - WebDriver setup completed successfully
+2025-07-22 17:54:22,810 - INFO - Scraping page 1 for keyword 'lipstick'
+2025-07-22 17:54:22,829 - INFO - Found 20 product links using selector: .css-qlopj4
+2025-07-22 17:54:25,797 - INFO - Found 10 product URLs for keyword 'lipstick'
+2025-07-22 17:54:28,246 - INFO - Found 10 unique products to scrape
+2025-07-22 17:54:28,247 - INFO - Scraping product: https://www.nykaa.com/m-a-c-macximal-matte-lipstick/p/13784071
+2025-07-22 17:54:35,287 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 200821 (char 200820)
+2025-07-22 17:54:35,287 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 17:54:36,368 - INFO - Extracted product ID from URL pattern '/p/(\d+)': 13784071
+2025-07-22 17:54:36,539 - INFO - Final extracted IDs - Product ID: 13784071, SKU ID: None
+2025-07-22 17:54:36,539 - INFO - Navigating to reviews page: https://www.nykaa.com/m-a-c-macximal-matte-lipstick/reviews/13784071?ptype=reviews
+2025-07-22 17:54:42,551 - INFO - Found 22 review elements using Verified Buyers text
+2025-07-22 17:54:42,555 - INFO - Scroll 1: Found 18 reviews, 18 new
+2025-07-22 17:54:47,091 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:54:47,095 - INFO - Scroll 2: Found 36 reviews, 18 new
+2025-07-22 17:54:50,786 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:54:50,791 - INFO - Scroll 3: Found 36 reviews, 0 new
+2025-07-22 17:54:56,005 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:54:56,011 - INFO - Scroll 4: Found 36 reviews, 0 new
+2025-07-22 17:55:00,185 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:55:00,191 - INFO - Scroll 5: Found 36 reviews, 0 new
+2025-07-22 17:55:04,769 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:55:04,774 - INFO - Scroll 6: Found 36 reviews, 0 new
+2025-07-22 17:55:08,980 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:55:08,985 - INFO - Scroll 7: Found 36 reviews, 0 new
+2025-07-22 17:55:13,512 - INFO - Completed review extraction with infinite scroll. Total reviews: 36
+2025-07-22 17:55:13,513 - INFO - Successfully extracted 36 reviews from dedicated page
+2025-07-22 17:55:13,513 - INFO - Successfully scraped product: M.A.C MACximal Matte Lipstick - Ruby Woo(3.5g)
+2025-07-22 17:55:16,138 - INFO - Scraping product: https://www.nykaa.com/maybelline-new-york-superstay-vinyl-ink-liquid-lipstick/p/7066987
+2025-07-22 17:55:22,588 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 205713 (char 205712)
+2025-07-22 17:55:22,589 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 17:55:23,690 - INFO - Extracted product ID from URL pattern '/p/(\d+)': 7066987
+2025-07-22 17:55:23,855 - INFO - Final extracted IDs - Product ID: 7066987, SKU ID: None
+2025-07-22 17:55:23,855 - INFO - Navigating to reviews page: https://www.nykaa.com/maybelline-new-york-superstay-vinyl-ink-liquid-lipstick/reviews/7066987?ptype=reviews
+2025-07-22 17:55:30,794 - INFO - Found 22 review elements using Verified Buyers text
+2025-07-22 17:55:30,798 - INFO - Scroll 1: Found 17 reviews, 16 new
+2025-07-22 17:55:34,281 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:55:34,287 - INFO - Scroll 2: Found 32 reviews, 15 new
+2025-07-22 17:55:39,007 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:55:39,012 - INFO - Scroll 3: Found 32 reviews, 0 new
+2025-07-22 17:55:43,043 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:55:43,048 - INFO - Scroll 4: Found 32 reviews, 0 new
+2025-07-22 17:55:47,834 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:55:47,839 - INFO - Scroll 5: Found 32 reviews, 0 new
+2025-07-22 17:55:52,352 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:55:52,357 - INFO - Scroll 6: Found 32 reviews, 0 new
+2025-07-22 17:55:57,169 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:55:57,174 - INFO - Scroll 7: Found 32 reviews, 0 new
+2025-07-22 17:56:01,453 - INFO - Completed review extraction with infinite scroll. Total reviews: 31
+2025-07-22 17:56:01,453 - INFO - Successfully extracted 31 reviews from dedicated page
+2025-07-22 17:56:01,454 - INFO - Successfully scraped product: Maybelline New York Super Stay Vinyl Ink Liquid Lipstick, Instant Shine Lasts Up To 16H - Charmed(4.2ml)
+2025-07-22 17:56:04,391 - INFO - Scraping product: https://www.nykaa.com/nykaa-matte-to-last-liquid-lipstick/p/303851
+2025-07-22 17:56:12,484 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 220443 (char 220442)
+2025-07-22 17:56:12,485 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 17:56:13,530 - INFO - Extracted product ID from URL pattern '/p/(\d+)': 303851
+2025-07-22 17:56:13,690 - INFO - Final extracted IDs - Product ID: 303851, SKU ID: None
+2025-07-22 17:56:13,690 - INFO - Navigating to reviews page: https://www.nykaa.com/nykaa-matte-to-last-liquid-lipstick/reviews/303851?ptype=reviews
+2025-07-22 17:56:20,911 - INFO - Found 22 review elements using Verified Buyers text
+2025-07-22 17:56:20,914 - INFO - Scroll 1: Found 16 reviews, 16 new
+2025-07-22 17:56:24,609 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:56:24,615 - INFO - Scroll 2: Found 27 reviews, 11 new
+2025-07-22 17:56:29,553 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:56:29,558 - INFO - Scroll 3: Found 27 reviews, 0 new
+2025-07-22 17:56:34,574 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:56:34,579 - INFO - Scroll 4: Found 27 reviews, 0 new
+2025-07-22 17:56:39,410 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:56:39,416 - INFO - Scroll 5: Found 27 reviews, 0 new
+2025-07-22 17:56:44,309 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:56:44,314 - INFO - Scroll 6: Found 27 reviews, 0 new
+2025-07-22 17:56:48,732 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:56:48,738 - INFO - Scroll 7: Found 27 reviews, 0 new
+2025-07-22 17:56:53,783 - INFO - Completed review extraction with infinite scroll. Total reviews: 27
+2025-07-22 17:56:53,784 - INFO - Successfully extracted 27 reviews from dedicated page
+2025-07-22 17:56:53,784 - INFO - Successfully scraped product: Nykaa Matte To Last ! Liquid Lipstick- Jaanvi - 23(6.2ml)
+2025-07-22 17:56:56,512 - INFO - Scraping product: https://www.nykaa.com/lakme-absolute-lip-mousse/p/10031582
+2025-07-22 17:57:02,784 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 161383 (char 161382)
+2025-07-22 17:57:02,784 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 17:57:03,838 - INFO - Extracted product ID from URL pattern '/p/(\d+)': 10031582
+2025-07-22 17:57:03,990 - INFO - Final extracted IDs - Product ID: 10031582, SKU ID: None
+2025-07-22 17:57:03,990 - INFO - Navigating to reviews page: https://www.nykaa.com/lakme-absolute-lip-mousse/reviews/10031582?ptype=reviews
+2025-07-22 17:57:10,982 - INFO - Found 22 review elements using Verified Buyers text
+2025-07-22 17:57:10,985 - INFO - Scroll 1: Found 15 reviews, 15 new
+2025-07-22 17:57:15,420 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:57:15,425 - INFO - Scroll 2: Found 32 reviews, 16 new
+2025-07-22 17:57:20,285 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:57:20,291 - INFO - Scroll 3: Found 32 reviews, 0 new
+2025-07-22 17:57:24,483 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:57:24,489 - INFO - Scroll 4: Found 32 reviews, 0 new
+2025-07-22 17:57:27,848 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:57:27,854 - INFO - Scroll 5: Found 32 reviews, 0 new
+2025-07-22 17:57:32,385 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:57:32,390 - INFO - Scroll 6: Found 32 reviews, 0 new
+2025-07-22 17:57:37,108 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:57:37,113 - INFO - Scroll 7: Found 32 reviews, 0 new
+2025-07-22 17:57:40,283 - INFO - Completed review extraction with infinite scroll. Total reviews: 31
+2025-07-22 17:57:40,284 - INFO - Successfully extracted 31 reviews from dedicated page
+2025-07-22 17:57:40,284 - INFO - Successfully scraped product: Lakme Xtraordin-Airy Velvet Matte Lip Mousse - 304 Chocolate Temptation(4.6 g)
+2025-07-22 17:57:42,794 - INFO - Scraping product: https://www.nykaa.com/l-oreal-paris-infallible-matte-resistance-liquid-lipstick/p/13168494
+2025-07-22 17:57:49,091 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 176920 (char 176919)
+2025-07-22 17:57:49,092 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 17:57:50,170 - INFO - Extracted product ID from URL pattern '/p/(\d+)': 13168494
+2025-07-22 17:57:50,359 - INFO - Final extracted IDs - Product ID: 13168494, SKU ID: None
+2025-07-22 17:57:50,359 - INFO - Navigating to reviews page: https://www.nykaa.com/l-oreal-paris-infallible-matte-resistance-liquid-lipstick/reviews/13168494?ptype=reviews
+2025-07-22 17:57:57,449 - INFO - Found 22 review elements using Verified Buyers text
+2025-07-22 17:57:57,453 - INFO - Scroll 1: Found 21 reviews, 21 new
+2025-07-22 17:58:02,598 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:58:02,605 - INFO - Scroll 2: Found 40 reviews, 19 new
+2025-07-22 17:58:06,408 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:58:06,413 - INFO - Scroll 3: Found 40 reviews, 0 new
+2025-07-22 17:58:10,829 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:58:10,835 - INFO - Scroll 4: Found 40 reviews, 0 new
+2025-07-22 17:58:14,907 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:58:14,913 - INFO - Scroll 5: Found 40 reviews, 0 new
+2025-07-22 17:58:20,083 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:58:20,088 - INFO - Scroll 6: Found 40 reviews, 0 new
+2025-07-22 17:58:23,572 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:58:23,577 - INFO - Scroll 7: Found 40 reviews, 0 new
+2025-07-22 17:58:26,830 - INFO - Completed review extraction with infinite scroll. Total reviews: 40
+2025-07-22 17:58:26,831 - INFO - Successfully extracted 40 reviews from dedicated page
+2025-07-22 17:58:26,831 - INFO - Successfully scraped product: L'Oreal Paris Infallible Matte Resistance Liquid Lipstick - 635 Worth It Medium(5g)
+2025-07-22 17:58:30,017 - INFO - Scraping product: https://www.nykaa.com/kay-beauty-signature-creme-lipstick-panache/p/16439255
+2025-07-22 17:58:36,503 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 170546 (char 170545)
+2025-07-22 17:58:36,503 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 17:58:37,572 - INFO - Extracted product ID from URL pattern '/p/(\d+)': 16439255
+2025-07-22 17:58:37,759 - INFO - Final extracted IDs - Product ID: 16439255, SKU ID: None
+2025-07-22 17:58:37,759 - INFO - Navigating to reviews page: https://www.nykaa.com/kay-beauty-signature-creme-lipstick-panache/reviews/16439255?ptype=reviews
+2025-07-22 17:58:45,520 - INFO - Found 22 review elements using Verified Buyers text
+2025-07-22 17:58:45,526 - INFO - Scroll 1: Found 21 reviews, 20 new
+2025-07-22 17:58:49,150 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:58:49,156 - INFO - Scroll 2: Found 41 reviews, 20 new
+2025-07-22 17:58:53,146 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:58:53,151 - INFO - Scroll 3: Found 41 reviews, 0 new
+2025-07-22 17:58:56,741 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:58:56,747 - INFO - Scroll 4: Found 41 reviews, 0 new
+2025-07-22 17:59:00,851 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:59:00,856 - INFO - Scroll 5: Found 41 reviews, 0 new
+2025-07-22 17:59:04,903 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:59:04,908 - INFO - Scroll 6: Found 41 reviews, 0 new
+2025-07-22 17:59:10,086 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:59:10,093 - INFO - Scroll 7: Found 41 reviews, 0 new
+2025-07-22 17:59:14,819 - INFO - Completed review extraction with infinite scroll. Total reviews: 40
+2025-07-22 17:59:14,824 - INFO - Successfully extracted 40 reviews from dedicated page
+2025-07-22 17:59:14,825 - INFO - Successfully scraped product: Kay Beauty Hydra Creme Lipstick - Dreamer(3.6g)
+2025-07-22 17:59:18,193 - INFO - Scraping product: https://www.nykaa.com/e-l-f-cosmetics-pout-clout-lip-plumping-pen/p/14757625
+2025-07-22 17:59:25,687 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 117046 (char 117045)
+2025-07-22 17:59:25,687 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 17:59:26,758 - INFO - Extracted product ID from URL pattern '/p/(\d+)': 14757625
+2025-07-22 17:59:26,911 - INFO - Final extracted IDs - Product ID: 14757625, SKU ID: None
+2025-07-22 17:59:26,911 - INFO - Navigating to reviews page: https://www.nykaa.com/e-l-f-cosmetics-pout-clout-lip-plumping-pen/reviews/14757625?ptype=reviews
+2025-07-22 17:59:33,529 - INFO - Found 22 review elements using Verified Buyers text
+2025-07-22 17:59:33,532 - INFO - Scroll 1: Found 17 reviews, 17 new
+2025-07-22 17:59:38,356 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:59:38,361 - INFO - Scroll 2: Found 37 reviews, 20 new
+2025-07-22 17:59:42,425 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:59:42,430 - INFO - Scroll 3: Found 37 reviews, 0 new
+2025-07-22 17:59:47,482 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:59:47,486 - INFO - Scroll 4: Found 37 reviews, 0 new
+2025-07-22 17:59:53,066 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:59:53,073 - INFO - Scroll 5: Found 37 reviews, 0 new
+2025-07-22 17:59:58,530 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 17:59:58,536 - INFO - Scroll 6: Found 37 reviews, 0 new
+2025-07-22 18:00:02,194 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 18:00:02,199 - INFO - Scroll 7: Found 37 reviews, 0 new
+2025-07-22 18:00:05,771 - INFO - Completed review extraction with infinite scroll. Total reviews: 37
+2025-07-22 18:00:05,773 - INFO - Successfully extracted 37 reviews from dedicated page
+2025-07-22 18:00:05,776 - INFO - Successfully scraped product: e.l.f. Cosmetics Pout Clout Lip Plumping Pen - Wicked Cherry(2 g)
+2025-07-22 18:00:09,307 - INFO - Scraping product: https://www.nykaa.com/charlotte-tilbury-matte-revolution/p/985204
+2025-07-22 18:00:17,511 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 140002 (char 140001)
+2025-07-22 18:00:17,512 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 18:00:18,587 - INFO - Extracted product ID from URL pattern '/p/(\d+)': 985204
+2025-07-22 18:00:18,730 - INFO - Final extracted IDs - Product ID: 985204, SKU ID: None
+2025-07-22 18:00:18,730 - INFO - Navigating to reviews page: https://www.nykaa.com/charlotte-tilbury-matte-revolution/reviews/985204?ptype=reviews
+2025-07-22 18:00:25,126 - INFO - Found 22 review elements using Verified Buyers text
+2025-07-22 18:00:25,129 - INFO - Scroll 1: Found 19 reviews, 19 new
+2025-07-22 18:00:29,169 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 18:00:29,174 - INFO - Scroll 2: Found 35 reviews, 16 new
+2025-07-22 18:00:33,601 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 18:00:33,606 - INFO - Scroll 3: Found 35 reviews, 0 new
+2025-07-22 18:00:38,453 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 18:00:38,458 - INFO - Scroll 4: Found 35 reviews, 0 new
+2025-07-22 18:00:43,292 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 18:00:43,298 - INFO - Scroll 5: Found 35 reviews, 0 new
+2025-07-22 18:00:48,819 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 18:00:48,825 - INFO - Scroll 6: Found 35 reviews, 0 new
+2025-07-22 18:00:53,029 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 18:00:53,034 - INFO - Scroll 7: Found 35 reviews, 0 new
+2025-07-22 18:00:57,574 - INFO - Completed review extraction with infinite scroll. Total reviews: 35
+2025-07-22 18:00:57,576 - INFO - Successfully extracted 35 reviews from dedicated page
+2025-07-22 18:00:57,579 - INFO - Successfully scraped product: Charlotte Tilbury Matte Revolution - Pillow Talk Medium(3.5g)
+2025-07-22 18:00:59,950 - INFO - Scraping product: https://www.nykaa.com/yves-saint-laurent-rouge-pur-couture-lipstick/p/16175557
+2025-07-22 18:01:10,248 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 134104 (char 134103)
+2025-07-22 18:01:10,248 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 18:01:11,317 - INFO - Extracted product ID from URL pattern '/p/(\d+)': 16175557
+2025-07-22 18:01:11,456 - INFO - Final extracted IDs - Product ID: 16175557, SKU ID: None
+2025-07-22 18:01:11,456 - INFO - Navigating to reviews page: https://www.nykaa.com/yves-saint-laurent-rouge-pur-couture-lipstick/reviews/16175557?ptype=reviews
+2025-07-22 18:01:17,654 - INFO - Found 22 review elements using Verified Buyers text
+2025-07-22 18:01:17,657 - INFO - Scroll 1: Found 17 reviews, 17 new
+2025-07-22 18:01:21,712 - INFO - Found 30 review elements using Verified Buyers text
+2025-07-22 18:01:21,717 - INFO - Scroll 2: Found 24 reviews, 7 new
+2025-07-22 18:01:26,789 - INFO - Found 30 review elements using Verified Buyers text
+2025-07-22 18:01:26,795 - INFO - Scroll 3: Found 24 reviews, 0 new
