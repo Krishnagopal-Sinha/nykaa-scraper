@@ -1,18 +1,13 @@
-#!/usr/bin/env python3
 """
 Nykaa Product Scraper
 
-A comprehensive web scraper for Nykaa.com that collects:
-- Product information (name, price, ratings, images, descriptions, etc.)
-- Product reviews/comments with detailed user information
-- Seller/brand information
-- Product variants and specifications
-
-Usage:
-    python nykaa_scraper.py
-
-Author: AI Assistant
-Date: 2024
+A comprehensive web scraper for Nykaa.com with:
+- Large-scale scraping capabilities
+- Checkpoint/resume functionality
+- Multi-threading optimization
+- Semantic-based element detection
+- Comprehensive review extraction with proper Load More handling
+- Separate JSON files per keyword
 """
 
 import requests
@@ -23,13 +18,12 @@ import re
 import logging
 import os
 import threading
+import pickle
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-from urllib.parse import urljoin, urlparse, parse_qs
 from dataclasses import dataclass, asdict
-from pathlib import Path
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -38,11 +32,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 from fake_useragent import UserAgent
 from tqdm import tqdm
-
 
 # Configure logging
 logging.basicConfig(
@@ -55,7 +48,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class ProductVariant:
     """Data class for product variants (size, color, etc.)"""
@@ -64,7 +56,6 @@ class ProductVariant:
     discounted_price: Optional[float]
     availability: str
     variant_id: Optional[str]
-
 
 @dataclass
 class UserInfo:
@@ -75,7 +66,6 @@ class UserInfo:
     review_count: Optional[int]
     location: Optional[str]
     join_date: Optional[str]
-
 
 @dataclass
 class Review:
@@ -92,7 +82,6 @@ class Review:
     pros: List[str]
     cons: List[str]
 
-
 @dataclass
 class SellerInfo:
     """Data class for seller/brand information"""
@@ -104,7 +93,6 @@ class SellerInfo:
     seller_reviews_count: Optional[int]
     brand_description: Optional[str]
     official_store: bool
-
 
 @dataclass
 class ProductInfo:
@@ -135,22 +123,79 @@ class ProductInfo:
     scraped_at: str
     product_url: str
 
+class CheckpointManager:
+    """Manages checkpoint saving and loading for resume functionality"""
+    
+    def __init__(self, checkpoint_dir: str = "checkpoints"):
+        self.checkpoint_dir = checkpoint_dir
+        os.makedirs(checkpoint_dir, exist_ok=True)
+    
+    def save_checkpoint(self, keyword: str, scraped_products: List[Dict], processed_urls: set, metadata: Dict):
+        """Save checkpoint data"""
+        checkpoint_data = {
+            'keyword': keyword,
+            'scraped_products': scraped_products,
+            'processed_urls': list(processed_urls),
+            'metadata': metadata,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        checkpoint_file = os.path.join(self.checkpoint_dir, f"checkpoint_{keyword.replace(' ', '_')}.pkl")
+        try:
+            with open(checkpoint_file, 'wb') as f:
+                pickle.dump(checkpoint_data, f)
+            logger.info(f"Checkpoint saved for keyword '{keyword}': {len(scraped_products)} products")
+        except Exception as e:
+            logger.error(f"Failed to save checkpoint for '{keyword}': {e}")
+    
+    def load_checkpoint(self, keyword: str) -> Optional[Dict]:
+        """Load checkpoint data"""
+        checkpoint_file = os.path.join(self.checkpoint_dir, f"checkpoint_{keyword.replace(' ', '_')}.pkl")
+        if os.path.exists(checkpoint_file):
+            try:
+                with open(checkpoint_file, 'rb') as f:
+                    data = pickle.load(f)
+                logger.info(f"Checkpoint loaded for keyword '{keyword}': {len(data['scraped_products'])} products")
+                return data
+            except Exception as e:
+                logger.error(f"Failed to load checkpoint for '{keyword}': {e}")
+        return None
+    
+    def clear_checkpoint(self, keyword: str):
+        """Clear checkpoint after successful completion"""
+        checkpoint_file = os.path.join(self.checkpoint_dir, f"checkpoint_{keyword.replace(' ', '_')}.pkl")
+        try:
+            if os.path.exists(checkpoint_file):
+                os.remove(checkpoint_file)
+                logger.info(f"Checkpoint cleared for keyword '{keyword}'")
+        except Exception as e:
+            logger.error(f"Failed to clear checkpoint for '{keyword}': {e}")
 
 class NykaaScraper:
-    """Main scraper class for Nykaa.com"""
+    """Main scraper class for Nykaa.com with large-scale optimizations"""
     
-    def __init__(self, headless: bool = True, delay_range: tuple = (1, 3), max_threads: int = 2):
+    def __init__(self, headless: bool = True, delay_range: tuple = (1, 3), max_threads: int = 2,
+                 max_reviews_per_product: int = 200, max_scroll_attempts: int = 150,
+                 max_consecutive_no_new: int = 10, review_load_wait_time: int = 8,
+                 enable_checkpoints: bool = True, save_frequency: int = 50,
+                 output_dir: str = "scrapped-data"):
         """
-        Initialize the Nykaa scraper
-        
-        Args:
-            headless: Whether to run browser in headless mode
-            delay_range: Random delay range between requests (min, max) seconds
-            max_threads: Maximum number of threads for parallel processing
+        Initialize the Nykaa scraper with large-scale optimizations
         """
         self.base_url = "https://www.nykaa.com"
         self.delay_range = delay_range
         self.max_threads = max_threads
+        self.max_reviews_per_product = max_reviews_per_product
+        self.max_scroll_attempts = max_scroll_attempts
+        self.max_consecutive_no_new = max_consecutive_no_new
+        self.review_load_wait_time = review_load_wait_time
+        self.enable_checkpoints = enable_checkpoints
+        self.save_frequency = save_frequency
+        self.output_dir = output_dir
+        
+        # Create output directory
+        os.makedirs(self.output_dir, exist_ok=True)
+        
         self.ua = UserAgent()
         self.session = requests.Session()
         self.driver = None
@@ -159,6 +204,9 @@ class NykaaScraper:
         # Thread safety
         self._data_lock = Lock()
         self._thread_local = threading.local()
+        
+        # Checkpoint manager
+        self.checkpoint_manager = CheckpointManager() if enable_checkpoints else None
         
         # Setup session headers
         self.session.headers.update({
@@ -170,16 +218,6 @@ class NykaaScraper:
             'Upgrade-Insecure-Requests': '1',
         })
         
-        self.scraped_data = {
-            'scrape_metadata': {
-                'scrape_date': datetime.now().isoformat(),
-                'total_products': 0,
-                'total_reviews': 0,
-                'keywords_searched': []
-            },
-            'products': []
-        }
-    
     def _get_thread_driver(self):
         """Get or create a driver instance for the current thread"""
         if not hasattr(self._thread_local, 'driver') or self._thread_local.driver is None:
@@ -188,12 +226,13 @@ class NykaaScraper:
         return self._thread_local.driver
     
     def _create_driver_instance(self):
-        """Create a new WebDriver instance"""
+        """Create a new WebDriver instance with optimized settings"""
         try:
             chrome_options = Options()
             if self.headless:
                 chrome_options.add_argument("--headless")
             
+            # Optimizations for large-scale scraping
             chrome_options.add_argument("--no-sandbox")
             chrome_options.add_argument("--disable-dev-shm-usage")
             chrome_options.add_argument("--disable-gpu")
@@ -203,133 +242,139 @@ class NykaaScraper:
             chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
             chrome_options.add_experimental_option('useAutomationExtension', False)
             
-            # Use a simpler, more reliable ChromeDriver setup
-            service = self._get_chromedriver_service()
+            # Memory optimizations
+            chrome_options.add_argument("--memory-pressure-off")
+            chrome_options.add_argument("--max_old_space_size=4096")
             
+            service = self._get_chromedriver_service()
             driver = webdriver.Chrome(service=service, options=chrome_options)
             driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             
-            logger.info(f"WebDriver created for thread {threading.current_thread().name}")
             return driver
             
         except Exception as e:
-            logger.error(f"Failed to create WebDriver for thread {threading.current_thread().name}: {e}")
+            logger.error(f"Failed to create WebDriver: {e}")
             raise
     
     def _get_chromedriver_service(self):
         """Get ChromeDriver service with simplified setup"""
-        # Check if we already have a working driver path stored
         if not hasattr(self, '_chromedriver_path'):
             self._chromedriver_path = self._setup_chromedriver()
-        
         return Service(self._chromedriver_path)
     
     def _setup_chromedriver(self):
-        """Setup ChromeDriver once and reuse"""
+        """Setup ChromeDriver with automatic detection and download"""
         import platform
         import subprocess
-        import os
-        import requests
-        import zipfile
         import stat
-        
-        logger.info("Setting up ChromeDriver...")
         
         # Try system ChromeDriver first
         try:
             result = subprocess.run(['which', 'chromedriver'], capture_output=True, text=True)
             if result.returncode == 0:
                 driver_path = result.stdout.strip()
-                logger.info(f"Using system ChromeDriver: {driver_path}")
-                return driver_path
+                # Test if it actually works
+                test_result = subprocess.run([driver_path, '--version'], capture_output=True, text=True, timeout=5)
+                if test_result.returncode == 0:
+                    logger.info(f"Using system ChromeDriver: {driver_path}")
+                    return driver_path
         except Exception:
             pass
         
-        # Try webdriver-manager as second option
+        # Try webdriver-manager
         try:
+            logger.info("Attempting to install ChromeDriver using webdriver-manager...")
             driver_path = ChromeDriverManager().install()
             logger.info(f"webdriver-manager returned path: {driver_path}")
             
-            # Verify the path is actually executable
-            if os.path.isfile(driver_path) and os.access(driver_path, os.X_OK):
-                # Check if it's not the THIRD_PARTY_NOTICES file
-                if not driver_path.endswith('THIRD_PARTY_NOTICES.chromedriver'):
-                    logger.info(f"Using webdriver-manager ChromeDriver: {driver_path}")
-                    return driver_path
+            # The webdriver-manager often returns the wrong file (THIRD_PARTY_NOTICES)
+            # We need to find the actual chromedriver executable
+            actual_driver_path = None
             
-            # If webdriver-manager returned wrong path, search for the actual executable
-            logger.info("webdriver-manager returned wrong path, searching for actual chromedriver...")
+            # Check if the returned path is actually the executable
+            if (os.path.isfile(driver_path) and 
+                os.access(driver_path, os.X_OK) and 
+                not driver_path.endswith('THIRD_PARTY_NOTICES.chromedriver')):
+                try:
+                    test_result = subprocess.run([driver_path, '--version'], capture_output=True, text=True, timeout=5)
+                    if test_result.returncode == 0:
+                        actual_driver_path = driver_path
+                except Exception:
+                    pass
             
-            # Get the base cache directory from the returned path
-            if '.wdm' in driver_path:
-                # Extract the version directory
-                # Path looks like: /Users/user/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
-                path_parts = driver_path.split('/')
-                version_dir = None
-                for i, part in enumerate(path_parts):
-                    if part.startswith('chromedriver-'):  # Find chromedriver-mac-arm64 directory
-                        version_dir = '/'.join(path_parts[:i+1])
+            # If the returned path is wrong, search for the actual executable
+            if not actual_driver_path:
+                logger.info("Searching for actual ChromeDriver executable...")
+                
+                # Get the directory containing the ChromeDriver
+                search_dir = os.path.dirname(driver_path)
+                
+                # Go up directories to find the base cache directory
+                for _ in range(3):
+                    if os.path.basename(search_dir) == '.wdm' or 'chromedriver' in os.path.basename(search_dir):
                         break
+                    search_dir = os.path.dirname(search_dir)
                 
-                if version_dir and os.path.exists(version_dir):
-                    logger.info(f"Searching in version directory: {version_dir}")
-                    
-                    # Look for chromedriver executable in this directory
-                    for file in os.listdir(version_dir):
+                logger.info(f"Searching in directory: {search_dir}")
+                
+                # Search for chromedriver executable recursively
+                for root, dirs, files in os.walk(search_dir):
+                    for file in files:
                         if file == 'chromedriver':
-                            potential_path = os.path.join(version_dir, file)
+                            potential_path = os.path.join(root, file)
+                            
+                            # Skip text files and notices
+                            if ('THIRD_PARTY_NOTICES' in potential_path or 
+                                potential_path.endswith('.txt') or
+                                potential_path.endswith('.chromedriver')):
+                                continue
+                            
                             if os.path.isfile(potential_path):
-                                # Make sure it has execute permissions
-                                os.chmod(potential_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                                # Make it executable
+                                try:
+                                    os.chmod(potential_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                                except Exception:
+                                    continue
                                 
-                                if os.access(potential_path, os.X_OK):
-                                    # Test if it actually works
-                                    try:
-                                        test_result = subprocess.run([potential_path, '--version'], 
-                                                                   capture_output=True, text=True, timeout=5)
-                                        if test_result.returncode == 0:
-                                            logger.info(f"Found working ChromeDriver: {potential_path}")
-                                            return potential_path
-                                    except Exception as e:
-                                        logger.warning(f"Test failed for {potential_path}: {e}")
-                                        continue
-                
-                # Fallback: search the entire cache directory structure
-                cache_base = os.path.expanduser("~/.wdm")
-                if os.path.exists(cache_base):
-                    logger.info(f"Searching entire cache directory: {cache_base}")
-                    for root, dirs, files in os.walk(cache_base):
-                        for file in files:
-                            if file == 'chromedriver':
-                                potential_path = os.path.join(root, file)
-                                if os.path.isfile(potential_path):
-                                    # Skip THIRD_PARTY_NOTICES files
-                                    if 'THIRD_PARTY_NOTICES' in potential_path:
-                                        continue
-                                    
-                                    # Make sure it has execute permissions
-                                    try:
-                                        os.chmod(potential_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
-                                    except Exception:
-                                        pass
-                                    
-                                    if os.access(potential_path, os.X_OK):
-                                        # Test if it actually works
-                                        try:
-                                            test_result = subprocess.run([potential_path, '--version'], 
-                                                                       capture_output=True, text=True, timeout=5)
-                                            if test_result.returncode == 0:
-                                                logger.info(f"Found working ChromeDriver in cache: {potential_path}")
-                                                return potential_path
-                                        except Exception as e:
-                                            logger.debug(f"Test failed for {potential_path}: {e}")
-                                            continue
-                                
+                                # Test if it's a working executable
+                                try:
+                                    test_result = subprocess.run([potential_path, '--version'], 
+                                                               capture_output=True, text=True, timeout=5)
+                                    if test_result.returncode == 0:
+                                        logger.info(f"Found working ChromeDriver: {potential_path}")
+                                        actual_driver_path = potential_path
+                                        break
+                                except Exception as e:
+                                    logger.debug(f"Test failed for {potential_path}: {e}")
+                                    continue
+                    if actual_driver_path:
+                        break
+            
+            if actual_driver_path:
+                logger.info(f"Using ChromeDriver: {actual_driver_path}")
+                return actual_driver_path
+            else:
+                logger.warning("Could not find working ChromeDriver executable in webdriver-manager cache")
+            
         except Exception as e:
             logger.warning(f"webdriver-manager failed: {e}")
         
-        # Download and setup ChromeDriver manually
-        logger.info("Downloading ChromeDriver manually...")
+        # Manual download as last resort
+        logger.info("Attempting manual ChromeDriver download...")
+        try:
+            return self._manual_chromedriver_download()
+        except Exception as e:
+            logger.error(f"Manual ChromeDriver download failed: {e}")
+        
+        raise Exception("Could not setup ChromeDriver - all methods failed")
+    
+    def _manual_chromedriver_download(self):
+        """Manually download ChromeDriver as last resort"""
+        import platform
+        import subprocess
+        import requests
+        import zipfile
+        import stat
         
         # Determine platform
         system = platform.system().lower()
@@ -352,15 +397,7 @@ class NykaaScraper:
         drivers_dir = os.path.join(os.getcwd(), "drivers")
         os.makedirs(drivers_dir, exist_ok=True)
         
-        # Try to get Chrome version
-        chrome_version = self._get_chrome_version()
-        
-        # List of versions to try (latest stable versions)
-        versions_to_try = []
-        if chrome_version:
-            versions_to_try.append(chrome_version)
-        
-        # Add some recent stable versions as fallbacks
+        # Try recent stable versions
         stable_versions = [
             "131.0.6778.85",
             "131.0.6778.69", 
@@ -368,14 +405,12 @@ class NykaaScraper:
             "130.0.6723.91",
             "129.0.6668.100"
         ]
-        versions_to_try.extend(stable_versions)
         
-        # Try each version until one works
-        for version in versions_to_try:
+        for version in stable_versions:
             try:
                 download_url = f"https://storage.googleapis.com/chrome-for-testing-public/{version}/{platform_name}/chromedriver-{platform_name}.zip"
                 
-                logger.info(f"Trying ChromeDriver version {version}...")
+                logger.info(f"Trying ChromeDriver version {version} for {platform_name}")
                 
                 # Download
                 response = requests.get(download_url, timeout=30)
@@ -402,7 +437,7 @@ class NykaaScraper:
                             potential_path = os.path.join(root, file)
                             if os.path.isfile(potential_path):
                                 driver_path = potential_path
-                        break
+                                break
                     if driver_path:
                         break
                 
@@ -430,1068 +465,341 @@ class NykaaScraper:
                     shutil.rmtree(extract_dir)
                 except:
                     pass
-                    
+                
             except Exception as e:
                 logger.warning(f"Failed to download ChromeDriver version {version}: {e}")
                 continue
         
-        raise Exception("Could not download or setup ChromeDriver")
-    
-    def _get_chrome_version(self):
-        """Get installed Chrome version"""
-        try:
-            import subprocess
-            
-            # Try different Chrome executable paths
-            chrome_paths = [
-                "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-                "google-chrome-stable",
-                "google-chrome",
-                "chromium-browser"
-            ]
-            
-            for chrome_path in chrome_paths:
-                try:
-                    result = subprocess.run([chrome_path, "--version"], capture_output=True, text=True, timeout=10)
-                    if result.returncode == 0:
-                        version_text = result.stdout.strip()
-                        # Extract version number
-                        import re
-                        version_match = re.search(r'(\d+\.\d+\.\d+\.\d+)', version_text)
-                        if version_match:
-                            version = version_match.group(1)
-                            logger.info(f"Detected Chrome version: {version}")
-                            return version
-                except Exception:
-                    continue
-            
-            logger.warning("Could not detect Chrome version")
-            return None
-            
-        except Exception as e:
-            logger.warning(f"Error detecting Chrome version: {e}")
-            return None
-    
-    def setup_driver(self):
-        """Setup Selenium WebDriver with proper configuration"""
-        try:
-            self.driver = self._create_driver_instance()
-            logger.info("Main WebDriver setup completed successfully")
-            
-        except Exception as e:
-            logger.error(f"Failed to setup main WebDriver: {e}")
-            raise
+        raise Exception("Could not download any working ChromeDriver version")
     
     def random_delay(self):
-        """Add random delay between requests to avoid rate limiting"""
+        """Add random delay between requests"""
         delay = random.uniform(*self.delay_range)
         time.sleep(delay)
     
-    def _try_webdriver_manager(self):
-        """Try to setup driver using webdriver-manager"""
-        try:
-            # Clear any corrupted cache first
-            import os
-            import shutil
-            cache_dir = os.path.expanduser("~/.wdm")
-            if os.path.exists(cache_dir):
-                logger.info("Clearing webdriver-manager cache...")
-                shutil.rmtree(cache_dir)
-            
-            driver_path = ChromeDriverManager().install()
-            logger.info(f"webdriver-manager returned path: {driver_path}")
-            
-            # The webdriver-manager sometimes returns the wrong file path
-            # We need to find the actual chromedriver executable
-            actual_driver_path = None
-            
-            # First check if the returned path is actually executable
-            if os.path.isfile(driver_path) and os.access(driver_path, os.X_OK):
-                # Check if it's not the THIRD_PARTY_NOTICES file
-                if not driver_path.endswith('THIRD_PARTY_NOTICES.chromedriver'):
-                    actual_driver_path = driver_path
-            
-            # If not found, search in the directory tree
-            if not actual_driver_path:
-                search_dir = os.path.dirname(driver_path)
-                # Go up a few levels to find the base download directory
-                for _ in range(3):
-                    search_dir = os.path.dirname(search_dir)
-                    if os.path.basename(search_dir) == '.wdm':
-                        break
-                
-                logger.info(f"Searching for chromedriver executable in: {search_dir}")
-                
-                # Search for the actual chromedriver executable
-                for root, dirs, files in os.walk(search_dir):
-                    for file in files:
-                        if file == 'chromedriver' and not file.endswith('.chromedriver'):
-                            potential_path = os.path.join(root, file)
-                            if os.path.isfile(potential_path) and os.access(potential_path, os.X_OK):
-                                # Double check it's not a text file by trying to read the first few bytes
-                                try:
-                                    with open(potential_path, 'rb') as f:
-                                        header = f.read(4)
-                                        # Executable files typically start with specific magic bytes
-                                        # On macOS, look for Mach-O magic bytes or ELF
-                                        if header.startswith(b'\xcf\xfa\xed\xfe') or header.startswith(b'\xfe\xed\xfa'):  # Mach-O 64-bit
-                                            actual_driver_path = potential_path
-                                            break
-                                        elif header.startswith(b'\x7fELF'):  # ELF format
-                                            actual_driver_path = potential_path
-                                            break
-                                except:
-                                    continue
-                    if actual_driver_path:
-                        break
-            
-            if not actual_driver_path:
-                raise Exception(f"Could not find executable chromedriver in downloaded package. Searched from: {driver_path}")
-            
-            logger.info(f"Using ChromeDriver from webdriver-manager: {actual_driver_path}")
-            return Service(actual_driver_path)
-            
-        except Exception as e:
-            logger.warning(f"webdriver-manager failed: {e}")
-            raise
-    
-    def _try_system_chromedriver(self):
-        """Try to use system-installed ChromeDriver"""
-        try:
-            import subprocess
-            result = subprocess.run(['which', 'chromedriver'], capture_output=True, text=True)
-            if result.returncode == 0:
-                driver_path = result.stdout.strip()
-                logger.info(f"Using system ChromeDriver: {driver_path}")
-                return Service(driver_path)
-            else:
-                raise Exception("System ChromeDriver not found")
-        except Exception as e:
-            logger.warning(f"System ChromeDriver not available: {e}")
-            raise
-    
-    def _try_manual_chromedriver_install(self):
-        """Try to download and install ChromeDriver manually"""
-        try:
-            import subprocess
-            import zipfile
-            import platform
-            import requests
-            import os
-            
-            # Get Chrome version with multiple detection methods
-            chrome_version = None
-            major_version = "131"  # Default fallback
-            
-            detection_methods = [
-                # macOS methods
-                lambda: subprocess.run(["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "--version"], 
-                                     capture_output=True, text=True, timeout=10),
-                # Alternative macOS method
-                lambda: subprocess.run(["google-chrome", "--version"], 
-                                     capture_output=True, text=True, timeout=10),
-                # Linux method
-                lambda: subprocess.run(["google-chrome-stable", "--version"], 
-                                     capture_output=True, text=True, timeout=10),
-                # Check Chrome application directory (macOS)
-                lambda: subprocess.run(["defaults", "read", "/Applications/Google Chrome.app/Contents/Info", "CFBundleShortVersionString"], 
-                                     capture_output=True, text=True, timeout=10)
-            ]
-            
-            for method in detection_methods:
-                try:
-                    result = method()
-                    if result.returncode == 0 and result.stdout.strip():
-                        version_text = result.stdout.strip()
-                        # Extract version number from various formats
-                        import re
-                        version_match = re.search(r'(\d+)\.(\d+)\.(\d+)\.(\d+)', version_text)
-                        if version_match:
-                            chrome_version = version_match.group(0)
-                            major_version = version_match.group(1)
-                            logger.info(f"Detected Chrome version: {chrome_version}")
-                            break
-                except Exception as e:
-                    logger.debug(f"Chrome detection method failed: {e}")
-                    continue
-            
-            if not chrome_version:
-                logger.warning(f"Could not detect Chrome version, using default major version: {major_version}")
-            
-            # Determine platform
-            system = platform.system().lower()
-            machine = platform.machine().lower()
-            
-            if system == "darwin":
-                if "arm" in machine or "aarch64" in machine:
-                    platform_name = "mac-arm64"
-                else:
-                    platform_name = "mac-x64"
-            elif system == "linux":
-                if "arm" in machine or "aarch64" in machine:
-                    platform_name = "linux-arm64"
-                else:
-                    platform_name = "linux64"
-            else:  # Windows
-                platform_name = "win64"
-            
-            # Create a local drivers directory
-            drivers_dir = os.path.join(os.getcwd(), "drivers")
-            os.makedirs(drivers_dir, exist_ok=True)
-            
-            # Try to find a compatible ChromeDriver version
-            base_url = "https://storage.googleapis.com/chrome-for-testing-public"
-            download_url = None
-            
-            # Try exact version first, then nearby versions
-            version_attempts = []
-            if chrome_version:
-                version_attempts.append(chrome_version)
-            
-            # Add some common stable versions for the major version
-            major_int = int(major_version)
-            for minor_offset in [0, 1, 2, 3, 4, 5]:
-                for patch_offset in [0, 1, 2, 3]:
-                    test_version = f"{major_int}.0.{6112 + minor_offset}.{105 + patch_offset}"
-                    if test_version not in version_attempts:
-                        version_attempts.append(test_version)
-            
-            # Also try some versions from adjacent major versions
-            for major_offset in [-1, 1, -2, 2]:
-                test_major = major_int + major_offset
-                if test_major >= 114:  # Minimum supported version
-                    version_attempts.append(f"{test_major}.0.6112.105")
-            
-            for test_version in version_attempts:
-                try:
-                    test_url = f"{base_url}/{test_version}/{platform_name}/chromedriver-{platform_name}.zip"
-                    logger.info(f"Trying ChromeDriver version: {test_version}")
-                    
-                    # Quick HEAD request to check if URL exists
-                    head_response = requests.head(test_url, timeout=10)
-                    if head_response.status_code == 200:
-                        download_url = test_url
-                        logger.info(f"Found compatible ChromeDriver version: {test_version}")
-                        break
-                except Exception as e:
-                    logger.debug(f"Version {test_version} not available: {e}")
-                    continue
-            
-            if not download_url:
-                raise Exception(f"Could not find compatible ChromeDriver for Chrome {chrome_version} on {platform_name}")
-            
-            # Download ChromeDriver
-            logger.info(f"Downloading ChromeDriver from: {download_url}")
-            response = requests.get(download_url, timeout=120)
-            response.raise_for_status()
-            
-            # Save and extract
-            zip_path = os.path.join(drivers_dir, "chromedriver.zip")
-            with open(zip_path, "wb") as f:
-                f.write(response.content)
-            
-            # Extract
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall(drivers_dir)
-            
-            # Find the chromedriver executable
-            driver_path = None
-            for root, dirs, files in os.walk(drivers_dir):
-                for file in files:
-                    if file == 'chromedriver':
-                        potential_path = os.path.join(root, file)
-                        # Verify it's actually an executable file
-                        if os.path.isfile(potential_path):
-                            try:
-                                # Check file header to ensure it's a binary executable
-                                with open(potential_path, 'rb') as f:
-                                    header = f.read(4)
-                                    if (header.startswith(b'\xcf\xfa\xed\xfe') or  # Mach-O 64-bit
-                                        header.startswith(b'\xfe\xed\xfa') or      # Mach-O
-                                        header.startswith(b'\x7fELF')):            # ELF
-                                        driver_path = potential_path
-                                        break
-                            except:
-                                continue
-                if driver_path:
-                    break
-            
-            if not driver_path:
-                raise Exception("Could not find chromedriver executable after extraction")
-            
-            # Make sure it's executable on Unix systems
-            os.chmod(driver_path, 0o755)
-            
-            # Clean up zip file
-            try:
-                os.remove(zip_path)
-            except:
-                pass
-            
-            logger.info(f"Successfully downloaded and installed ChromeDriver: {driver_path}")
-            return Service(driver_path)
-            
-        except Exception as e:
-            logger.error(f"Manual ChromeDriver installation failed: {e}")
-            raise
-    
-    def _scrape_keyword_thread(self, keyword: str, max_products: int) -> List[Dict[str, Any]]:
-        """
-        Thread worker function to scrape products for a single keyword
-        
-        Args:
-            keyword: Search keyword
-            max_products: Maximum number of products to scrape for this keyword
-            
-        Returns:
-            List of scraped product data dictionaries
-        """
+    def _scrape_keyword_with_checkpoint(self, keyword: str, max_products: int) -> Dict[str, Any]:
+        """Scrape products for a keyword with checkpoint support and separate file saving"""
         thread_name = threading.current_thread().name
-        logger.info(f"[{thread_name}] Starting to scrape keyword: '{keyword}'")
+        logger.info(f"[{thread_name}] Starting keyword: '{keyword}' (max: {max_products} products)")
+        
+        # Load checkpoint if available
+        processed_urls = set()
+        scraped_products = []
+        
+        if self.checkpoint_manager:
+            checkpoint_data = self.checkpoint_manager.load_checkpoint(keyword)
+            if checkpoint_data:
+                scraped_products = checkpoint_data.get('scraped_products', [])
+                processed_urls = set(checkpoint_data.get('processed_urls', []))
+                logger.info(f"[{thread_name}] Resuming from checkpoint: {len(scraped_products)} products already scraped")
         
         try:
-            # Get thread-local driver
             driver = self._get_thread_driver()
             
-            # Search for products
-            product_urls = self._search_products_with_driver(driver, keyword, max_products)
-            logger.info(f"[{thread_name}] Found {len(product_urls)} URLs for keyword '{keyword}'")
+            # Get product URLs
+            product_urls = self._search_products_optimized(driver, keyword, max_products)
             
-            # Scrape each product
-            scraped_products = []
-            for i, url in enumerate(product_urls, 1):
+            # Filter out already processed URLs
+            new_urls = [url for url in product_urls if url not in processed_urls]
+            logger.info(f"[{thread_name}] Found {len(product_urls)} total URLs, {len(new_urls)} new URLs")
+            
+            # Process new URLs
+            for i, url in enumerate(new_urls):
+                if len(scraped_products) >= max_products:
+                    break
+                
                 try:
-                    logger.info(f"[{thread_name}] Scraping product {i}/{len(product_urls)} for '{keyword}': {url}")
-                    product_info = self._scrape_product_details_with_driver(driver, url)
+                    logger.info(f"[{thread_name}] Scraping product {len(scraped_products)+1}/{max_products}: {url}")
+                    product_info = self._scrape_product_details_optimized(driver, url)
+                    
                     if product_info:
                         scraped_products.append(asdict(product_info))
+                        processed_urls.add(url)
+                        
+                        # Save checkpoint periodically
+                        if (self.checkpoint_manager and 
+                            len(scraped_products) % self.save_frequency == 0):
+                            self.checkpoint_manager.save_checkpoint(
+                                keyword, scraped_products, processed_urls, 
+                                {'total_urls': len(product_urls), 'processed': len(processed_urls)}
+                            )
                     
                     self.random_delay()
                     
                 except Exception as e:
-                    logger.error(f"[{thread_name}] Error scraping product {url}: {e}")
+                    logger.error(f"[{thread_name}] Error scraping {url}: {e}")
                     continue
             
-            logger.info(f"[{thread_name}] Completed scraping for keyword '{keyword}': {len(scraped_products)} products")
-            return scraped_products
+            # Create keyword-specific data structure
+            keyword_data = {
+                'scrape_metadata': {
+                    'scrape_date': datetime.now().isoformat(),
+                    'keyword': keyword,
+                    'total_products': len(scraped_products),
+                    'total_reviews': sum(len(p.get('reviews', [])) for p in scraped_products),
+                    'scraper_version': '2.0_optimized'
+                },
+                'products': scraped_products
+            }
+            
+            # Save separate JSON file for this keyword
+            self._save_keyword_data(keyword, keyword_data)
+            
+            # Clear checkpoint on successful completion
+            if self.checkpoint_manager:
+                self.checkpoint_manager.clear_checkpoint(keyword)
+            
+            logger.info(f"[{thread_name}] Completed '{keyword}': {len(scraped_products)} products")
+            return keyword_data
             
         except Exception as e:
-            logger.error(f"[{thread_name}] Error scraping keyword '{keyword}': {e}")
-            return []
+            logger.error(f"[{thread_name}] Error processing keyword '{keyword}': {e}")
+            # Return partial data if available
+            keyword_data = {
+                'scrape_metadata': {
+                    'scrape_date': datetime.now().isoformat(),
+                    'keyword': keyword,
+                    'total_products': len(scraped_products),
+                    'total_reviews': sum(len(p.get('reviews', [])) for p in scraped_products),
+                    'scraper_version': '2.0_optimized',
+                    'error': str(e)
+                },
+                'products': scraped_products
+            }
+            return keyword_data
     
-    def _search_products_with_driver(self, driver, keyword: str, max_products: int = 50) -> List[str]:
-        """
-        Search for products using keyword with specific driver instance
+    def _save_keyword_data(self, keyword: str, data: Dict[str, Any]):
+        """Save data for a specific keyword to a separate JSON file"""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe_keyword = keyword.replace(' ', '_').replace('/', '_')
+        filename = f"{safe_keyword}_{timestamp}.json"
+        filepath = os.path.join(self.output_dir, filename)
         
-        Args:
-            driver: WebDriver instance to use
-            keyword: Search keyword
-            max_products: Maximum number of products to scrape
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
             
-        Returns:
-            List of product URLs
-        """
-        logger.info(f"Searching for products with keyword: '{keyword}'")
+            # Also save CSV summary for this keyword
+            csv_filename = f"{safe_keyword}_{timestamp}.csv"
+            csv_filepath = os.path.join(self.output_dir, csv_filename)
+            self._save_csv_summary(data, csv_filepath)
+            
+            logger.info(f"Data saved for keyword '{keyword}': {filepath} and {csv_filepath}")
+                        
+        except Exception as e:
+            logger.error(f"Error saving data for keyword '{keyword}': {e}")
+    
+    def _save_csv_summary(self, data: Dict[str, Any], filepath: str):
+        """Save a CSV summary for a specific keyword"""
+        try:
+            import pandas as pd
+            
+            # Create summary data
+            summary_data = []
+            for product in data['products']:
+                summary_data.append({
+                    'product_id': product.get('product_id', ''),
+                    'name': product.get('name', ''),
+                    'brand': product.get('brand', ''),
+                    'category': product.get('category', ''),
+                    'price': product.get('price', 0),
+                    'discounted_price': product.get('discounted_price', ''),
+                    'rating': product.get('rating', 0),
+                    'review_count': product.get('review_count', 0),
+                    'reviews_scraped': len(product.get('reviews', [])),
+                    'availability': product.get('availability', ''),
+                    'product_url': product.get('product_url', '')
+                })
+            
+            df = pd.DataFrame(summary_data)
+            df.to_csv(filepath, index=False)
+            
+        except ImportError:
+            logger.info("Pandas not available, skipping CSV export")
+        except Exception as e:
+            logger.error(f"Error saving CSV: {e}")
+    
+    def _search_products_optimized(self, driver, keyword: str, max_products: int) -> List[str]:
+        """Optimized product search with better pagination handling"""
+        logger.info(f"Searching for products: '{keyword}' (max: {max_products})")
         
         product_urls = []
         
         try:
-            # Navigate to search page
-            search_url = f"{self.base_url}/search/result/?q={keyword.replace(' ', '%20')}"
-            driver.get(search_url)
-            self.random_delay()
-            
-            # Handle any popups or overlays
-            self._handle_popups_with_driver(driver)
-            
+            # Start with page 1
             page_num = 1
             
             while len(product_urls) < max_products:
-                logger.info(f"Scraping page {page_num} for keyword '{keyword}'")
+                # Build URL with page number parameter
+                search_url = f"{self.base_url}/search/result/?q={keyword.replace(' ', '%20')}&page_no={page_num}&sort=popularity"
+                logger.info(f"Scraping search page {page_num} for '{keyword}': {search_url}")
                 
-                # Wait for product listings to load with multiple possible selectors
+                driver.get(search_url)
+                self.random_delay()
+                
+                # Wait for products to load
                 try:
-                    # Try different selectors that might indicate products are loaded
-                    selectors_to_wait = [
-                        ".productWrapper",
-                        ".css-17nge1h", 
-                        ".css-qlopj4",
-                        "a[href*='/p/']"
-                    ]
-                    
-                    element_found = False
-                    for selector in selectors_to_wait:
-                        try:
-                            WebDriverWait(driver, 5).until(
-                                EC.presence_of_element_located((By.CSS_SELECTOR, selector))
-                            )
-                            element_found = True
-                            break
-                        except TimeoutException:
-                            continue
-                    
-                    if not element_found:
-                        logger.warning(f"No products found on page {page_num}")
-                        break
-                        
+                    WebDriverWait(driver, 15).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='/p/']"))
+                    )
                 except TimeoutException:
                     logger.warning(f"No products found on page {page_num}")
-                    break
+                    # Check if we've reached the end by looking for "no results" indicators
+                    page_source = driver.page_source.lower()
+                    if any(indicator in page_source for indicator in ['no products found', 'no results', 'sorry', '0 products']):
+                        logger.info(f"Reached end of results at page {page_num}")
+                        break
+                    # If it's just a timeout, try next page
+                    if page_num == 1:
+                        break  # If first page fails, something is wrong
+                    page_num += 1
+                    continue
                 
-                # Extract product URLs from current page using the correct selectors
-                product_link_selectors = [
-                    ".css-qlopj4",  # Main product link class
-                    "a[href*='/p/']",  # Any link containing /p/
-                    ".productWrapper a",  # Links within product wrappers
-                    ".css-17nge1h a"  # Links within product containers
-                ]
+                # Extract product URLs using semantic selectors
+                product_links = driver.find_elements(By.CSS_SELECTOR, "a[href*='/p/']")
                 
-                found_links = False
-                for selector in product_link_selectors:
+                new_urls_count = 0
+                for link in product_links:
+                    if len(product_urls) >= max_products:
+                        break
+                    
                     try:
-                        product_cards = driver.find_elements(By.CSS_SELECTOR, selector)
-                        
-                        if product_cards:
-                            logger.info(f"Found {len(product_cards)} product links using selector: {selector}")
-                            found_links = True
-                            
-                            for card in product_cards:
-                                if len(product_urls) >= max_products:
-                                    break
-                                
-                                try:
-                                    product_url = card.get_attribute('href')
-                                    if product_url and '/p/' in product_url and product_url not in product_urls:
-                                        # Clean the URL - remove query parameters except productId
-                                        if '?' in product_url:
-                                            base_url_part = product_url.split('?')[0]
-                                            # Keep only the base URL for consistency
-                                            product_urls.append(base_url_part)
-                                        else:
-                                            product_urls.append(product_url)
-                                except Exception as e:
-                                    logger.warning(f"Error extracting product URL: {e}")
-                                    continue
-                            break  # Exit selector loop if we found products
-                    except Exception as e:
-                        logger.warning(f"Error with selector {selector}: {e}")
+                        product_url = link.get_attribute('href')
+                        if product_url and '/p/' in product_url and product_url not in product_urls:
+                            # Clean URL - remove query parameters
+                            if '?' in product_url:
+                                product_url = product_url.split('?')[0]
+                            product_urls.append(product_url)
+                            new_urls_count += 1
+                    except Exception:
                         continue
                 
-                if not found_links:
-                    logger.warning(f"No product links found on page {page_num} with any selector")
+                logger.info(f"Page {page_num}: Found {new_urls_count} new product URLs (total: {len(product_urls)})")
+                
+                # If no new products found on this page, we've reached the end
+                if new_urls_count == 0:
+                    logger.info(f"No new products found on page {page_num}, stopping pagination")
                     break
                 
-                # Try to go to next page
-                try:
-                    next_button_selectors = [
-                        "[aria-label='Next']",
-                        ".css-1zi560",  # Next button class from the analysis
-                        "button:contains('Next')",
-                        ".pagination-next",
-                        ".next-page"
-                    ]
-                    
-                    next_clicked = False
-                    for selector in next_button_selectors:
-                        try:
-                            next_button = driver.find_element(By.CSS_SELECTOR, selector)
-                            if next_button.is_enabled() and next_button.is_displayed():
-                                driver.execute_script("arguments[0].click();", next_button)
-                                self.random_delay()
-                                page_num += 1
-                                next_clicked = True
-                                break
-                        except NoSuchElementException:
-                            continue
-                    
-                    if not next_clicked:
-                        logger.info("No next page button found or reached last page")
-                        break
-                        
-                except Exception as e:
-                    logger.info(f"Pagination ended: {e}")
+                # Check if we've reached max products
+                if len(product_urls) >= max_products:
+                    logger.info(f"Reached maximum products limit ({max_products})")
+                    break
+                
+                # Move to next page
+                page_num += 1
+                
+                # Safety check to prevent infinite loops
+                if page_num > 100:  # Reasonable safety limit
+                    logger.warning(f"Reached safety limit of 100 pages for keyword '{keyword}'")
                     break
         
         except Exception as e:
             logger.error(f"Error during product search: {e}")
         
-        logger.info(f"Found {len(product_urls)} product URLs for keyword '{keyword}'")
+        logger.info(f"Search completed for '{keyword}': {len(product_urls)} URLs found across {page_num-1} pages")
         return product_urls[:max_products]
     
-    def search_products(self, keyword: str, max_products: int = 50) -> List[str]:
-        """
-        Search for products using keyword and return product URLs
-        
-        Args:
-            keyword: Search keyword
-            max_products: Maximum number of products to scrape
-            
-        Returns:
-            List of product URLs
-        """
-        if not self.driver:
-            self.setup_driver()
-        
-        return self._search_products_with_driver(self.driver, keyword, max_products)
-    
-    def _handle_popups_with_driver(self, driver):
-        """Handle common popups and overlays on Nykaa including sign-in modals with specific driver"""
-        try:
-            # Wait a moment for popups to appear
-            time.sleep(2)
-            
-            # List of common popup close methods
-            close_methods = [
-                # Close buttons by aria-label
-                (By.CSS_SELECTOR, "[aria-label='Close']"),
-                (By.CSS_SELECTOR, "[aria-label='close']"),
-                (By.CSS_SELECTOR, "[aria-label='Close modal']"),
-                (By.CSS_SELECTOR, "[aria-label='Close dialog']"),
-                
-                # Close buttons by common text
-                (By.XPATH, "//button[contains(text(), 'Close')]"),
-                (By.XPATH, "//button[contains(text(), '×')]"),
-                (By.XPATH, "//span[contains(text(), '×')]"),
-                (By.XPATH, "//div[contains(text(), '×')]"),
-                
-                # Skip/Dismiss buttons for sign-in popups
-                (By.XPATH, "//button[contains(text(), 'Skip')]"),
-                (By.XPATH, "//button[contains(text(), 'Not now')]"),
-                (By.XPATH, "//button[contains(text(), 'Maybe later')]"),
-                (By.XPATH, "//button[contains(text(), 'Continue without signing in')]"),
-                (By.XPATH, "//a[contains(text(), 'Skip')]"),
-                
-                # Generic close selectors
-                (By.CSS_SELECTOR, ".close"),
-                (By.CSS_SELECTOR, ".close-btn"),
-                (By.CSS_SELECTOR, ".modal-close"),
-                (By.CSS_SELECTOR, ".popup-close"),
-                
-                # Click outside modal (overlay areas)
-                (By.CSS_SELECTOR, ".modal-overlay"),
-                (By.CSS_SELECTOR, ".overlay"),
-                (By.CSS_SELECTOR, "[class*='overlay']"),
-            ]
-            
-            for method, selector in close_methods:
-                try:
-                    if method == By.CSS_SELECTOR:
-                        elements = driver.find_elements(method, selector)
-                    else:  # XPATH
-                        elements = driver.find_elements(method, selector)
-                    
-                    for element in elements:
-                        if element.is_displayed() and element.is_enabled():
-                            try:
-                                # Try clicking the element
-                                driver.execute_script("arguments[0].click();", element)
-                                time.sleep(1)
-                                logger.info(f"Successfully closed popup using: {selector}")
-                                break
-                            except Exception as e:
-                                logger.debug(f"Failed to click close element: {e}")
-                                continue
-                    else:
-                        continue
-                    break  # If we successfully closed something, exit the outer loop
-                        
-                except Exception as e:
-                    logger.debug(f"Error with popup close method {selector}: {e}")
-                    continue
-            
-            # Try pressing Escape key as last resort
-            try:
-                from selenium.webdriver.common.keys import Keys
-                driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
-                time.sleep(1)
-                logger.debug("Tried pressing Escape key")
-            except Exception:
-                pass
-                
-        except Exception as e:
-            logger.debug(f"Error in popup handling: {e}")
-
-    def _handle_popups(self):
-        """Handle common popups and overlays on Nykaa including sign-in modals"""
-        self._handle_popups_with_driver(self.driver)
-
-    def _scrape_product_details_with_driver(self, driver, product_url: str) -> Optional[ProductInfo]:
-        """
-        Scrape comprehensive product details from product page using specific driver
-        
-        Args:
-            driver: WebDriver instance to use
-            product_url: URL of the product page
-            
-        Returns:
-            ProductInfo object with all scraped data
-        """
-        logger.info(f"Scraping product: {product_url}")
-        
+    def _scrape_product_details_optimized(self, driver, product_url: str) -> Optional[ProductInfo]:
+        """Optimized product detail scraping"""
         try:
             driver.get(product_url)
             self.random_delay()
             
-            # Handle popups
-            self._handle_popups_with_driver(driver)
-            
-            # Wait for page to load
-            WebDriverWait(driver, 15).until(
+            # Wait for basic content
+            WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "h1, .product-title"))
             )
             
             soup = BeautifulSoup(driver.page_source, 'html.parser')
             
-            # Extract basic product information
-            product_info = self._extract_basic_product_info(soup, product_url)
-            
+            # Extract basic info (simplified for speed)
+            product_info = self._extract_basic_info_fast(soup, product_url)
             if not product_info:
-                logger.warning(f"Could not extract basic product info from {product_url}")
                 return None
             
-            # Extract detailed information
-            product_info.description = self._extract_description(soup)
-            product_info.key_features = self._extract_key_features(soup)
-            product_info.ingredients = self._extract_ingredients(soup)
-            product_info.how_to_use = self._extract_how_to_use(soup)
-            product_info.images = self._extract_images(soup)
-            product_info.variants = self._extract_variants(soup)
-            product_info.specifications = self._extract_specifications(soup)
-            product_info.tags = self._extract_tags(soup)
-            product_info.availability = self._extract_availability(soup)
-            product_info.delivery_info = self._extract_delivery_info(soup)
-            product_info.return_policy = self._extract_return_policy(soup)
-            product_info.seller_info = self._extract_seller_info(soup)
-            
-            # Extract reviews (this might require scrolling or pagination)
-            product_info.reviews = self._extract_reviews_with_driver(driver, product_url)
+            # Extract reviews with optimized method
+            if self.max_reviews_per_product > 0:
+                product_info.reviews = self._extract_reviews_with_load_more(driver, product_url)
             
             product_info.scraped_at = datetime.now().isoformat()
-            
-            logger.info(f"Successfully scraped product: {product_info.name}")
             return product_info
             
         except Exception as e:
             logger.error(f"Error scraping product {product_url}: {e}")
             return None
-
-    def scrape_product_details(self, product_url: str) -> Optional[ProductInfo]:
-        """
-        Scrape comprehensive product details from product page
-        
-        Args:
-            product_url: URL of the product page
-            
-        Returns:
-            ProductInfo object with all scraped data
-        """
-        if not self.driver:
-            self.setup_driver()
-        
-        return self._scrape_product_details_with_driver(self.driver, product_url)
     
-    def _extract_basic_product_info(self, soup: BeautifulSoup, product_url: str) -> Optional[ProductInfo]:
-        """Extract basic product information from JSON data embedded in the page"""
+    def _extract_basic_info_fast(self, soup: BeautifulSoup, product_url: str) -> Optional[ProductInfo]:
+        """Fast extraction of basic product information"""
         try:
-            # Look for the main product data in script tags
-            product_data = None
-            
-            # Find the script tag with window.__PRELOADED_STATE__
+            # Extract from JSON data (fastest method)
             script_tags = soup.find_all('script')
             for script in script_tags:
                 if script.string and 'window.__PRELOADED_STATE__' in script.string:
-                    script_content = script.string
-                    # Extract JSON from the script using improved boundary detection
                     try:
-                        product_data = self._extract_json_data_safely(script_content, 'window.__PRELOADED_STATE__ = ')
-                        if product_data and isinstance(product_data, dict):
-                            # Navigate to the product details
-                            product_details = product_data.get('productPage', {}).get('productDetails', {})
-                            if product_details and product_details.get('name'):
-                                product_data = product_details
-                                break
-                    except Exception as e:
-                        logger.warning(f"Failed to parse JSON from script tag: {e}")
+                        json_match = re.search(r'window\.__PRELOADED_STATE__\s*=\s*({.+?});', script.string)
+                        if json_match:
+                            data = json.loads(json_match.group(1))
+                            product_details = data.get('productPage', {}).get('productDetails', {})
+                            if product_details.get('name'):
+                                return self._create_product_info_from_json(product_details, product_url)
+                    except Exception:
                         continue
             
-            # If product data found in JSON, extract from there
-            if product_data and product_data.get('name'):
-                return self._extract_from_json_data(product_data, product_url)
-            
-            # Fallback: try to extract from HTML elements (if JSON extraction fails)
-            logger.warning("JSON extraction failed, trying HTML extraction as fallback")
-            return self._extract_from_html_fallback(soup, product_url)
+            # Fallback to HTML extraction
+            return self._extract_basic_info_from_html(soup, product_url)
             
         except Exception as e:
-            logger.error(f"Error extracting basic product info: {e}")
+            logger.error(f"Error extracting basic info: {e}")
             return None
 
-    def _extract_json_data_safely(self, script_content: str, start_marker: str) -> dict:
-        """Safely extract JSON data from script content"""
+    def _create_product_info_from_json(self, data: dict, product_url: str) -> ProductInfo:
+        """Create ProductInfo from JSON data"""
+        return ProductInfo(
+            product_id=str(data.get('parentId', data.get('id', 'unknown'))),
+            name=data.get('name', 'Unknown Product'),
+            brand=data.get('brandName', 'Unknown Brand'),
+            category=data.get('primaryCategories', {}).get('l2', {}).get('name', 'Unknown'),
+            subcategory=data.get('primaryCategories', {}).get('l3', {}).get('name', 'Unknown'),
+            price=float(data.get('mrp', 0)),
+            discounted_price=float(data.get('offerPrice', 0)) if data.get('offerPrice') else None,
+            discount_percentage=float(data.get('discount', 0)) if data.get('discount') else None,
+            rating=float(data.get('rating', 0)),
+            review_count=int(data.get('reviewCount', 0)),
+            description=data.get('description', ''),
+            key_features=[],
+            ingredients=[],
+            how_to_use='',
+            images=[data.get('imageUrl', '')] if data.get('imageUrl') else [],
+            variants=[],
+            seller_info=SellerInfo('', None, data.get('brandName', ''), None, None, None, None, False),
+            reviews=[],
+            specifications={},
+            tags=[],
+            availability="In Stock" if data.get('inStock', False) else "Out of Stock",
+            delivery_info='',
+            return_policy='',
+            scraped_at='',
+            product_url=product_url
+        )
+            
+    def _extract_basic_info_from_html(self, soup: BeautifulSoup, product_url: str) -> Optional[ProductInfo]:
+        """HTML fallback extraction"""
         try:
-            start = script_content.find(start_marker)
-            if start == -1:
-                return {}
-            
-            start += len(start_marker)
-            
-            # Find the end of the JSON by looking for the next script or window statement
-            possible_ends = [
-                script_content.find('window.__APP_DATA__', start),
-                script_content.find('window.dataLayer', start),
-                script_content.find('</script>', start),
-                script_content.find('window.', start + 100),  # Look for next window statement
-                script_content.find('\n<script', start),
-                script_content.find('\nwindow.', start + 100)
-            ]
-            
-            # Use the earliest valid end position
-            valid_ends = [end for end in possible_ends if end > start]
-            if valid_ends:
-                end = min(valid_ends)
-            else:
-                end = len(script_content) - 10
-            
-            # Extract the potential JSON string
-            json_str = script_content[start:end].strip()
-            
-            # Clean up the JSON string
-            json_str = json_str.rstrip(';').strip()
-            
-            # Try to find the end of the JSON object by counting braces
-            if json_str.startswith('{'):
-                brace_count = 0
-                actual_end = 0
-                in_string = False
-                escape_next = False
-                
-                for i, char in enumerate(json_str):
-                    if escape_next:
-                        escape_next = False
-                        continue
-                    
-                    if char == '\\':
-                        escape_next = True
-                        continue
-                    
-                    if char == '"' and not escape_next:
-                        in_string = not in_string
-                        continue
-                    
-                    if not in_string:
-                        if char == '{':
-                            brace_count += 1
-                        elif char == '}':
-                            brace_count -= 1
-                            if brace_count == 0:
-                                actual_end = i + 1
-                                break
-                
-                if actual_end > 0:
-                    json_str = json_str[:actual_end]
-            
-            return json.loads(json_str)
-            
-        except json.JSONDecodeError as e:
-            logger.warning(f"JSON decode error: {e}")
-            return {}
-        except Exception as e:
-            logger.warning(f"Error extracting JSON safely: {e}")
-            return {}
-
-    def _extract_from_json_data(self, product_data: dict, product_url: str) -> ProductInfo:
-        """Extract product information from JSON data"""
-        try:
-            # Basic information
-            name = product_data.get('name', 'Unknown Product')
-            brand = product_data.get('brandName', 'Unknown Brand')
-            
-            # Category information
-            category_levels = product_data.get('categoryLevels', {})
-            primary_categories = product_data.get('primaryCategories', {})
-            
-            category = "Unknown"
-            subcategory = "Unknown"
-            
-            if primary_categories:
-                l1 = primary_categories.get('l1', {})
-                l2 = primary_categories.get('l2', {})
-                l3 = primary_categories.get('l3', {})
-                
-                category = l2.get('name', l1.get('name', 'Unknown'))
-                subcategory = l3.get('name', l2.get('name', 'Unknown'))
-            
-            # Pricing
-            price = float(product_data.get('mrp', 0))
-            discounted_price = product_data.get('offerPrice')
-            if discounted_price:
-                discounted_price = float(discounted_price)
-            
-            # Calculate discount percentage
-            discount_percentage = None
-            if discounted_price and price and price > 0:
-                discount_percentage = round(((price - discounted_price) / price) * 100, 2)
-            elif product_data.get('discount'):
-                discount_percentage = float(product_data.get('discount', 0))
-            
-            # Rating and reviews
-            rating = float(product_data.get('rating', 0))
-            review_count = int(product_data.get('reviewCount', 0))
-            rating_count = int(product_data.get('ratingCount', 0))
-            
-            # Product ID
-            product_id = str(product_data.get('parentId', product_data.get('id', self._extract_product_id(product_url))))
-            
-            # Extract more detailed information
-            description = product_data.get('description', '')
-            if not description:
-                # Try to get description from other fields
-                ingredients_text = product_data.get('ingredients', '')
-                if ingredients_text and isinstance(ingredients_text, str):
-                    # Clean HTML from ingredients text
-                    description = self._clean_html_text(ingredients_text)
-            
-            # Key features (extract from description or other fields)
-            key_features = []
-            if description:
-                # Try to extract features from description
-                feature_patterns = [
-                    r'<b>Key Features:</b>\s*(.+?)(?:<b>|$)',
-                    r'Features:\s*(.+?)(?:\n|$)',
-                ]
-                for pattern in feature_patterns:
-                    match = re.search(pattern, description, re.IGNORECASE | re.DOTALL)
-                    if match:
-                        features_text = match.group(1)
-                        # Split by common delimiters
-                        features = [f.strip() for f in re.split(r'[•\n\r-]', features_text) if f.strip()]
-                        key_features = features[:5]  # Limit to first 5 features
-                        break
-            
-            # Ingredients
-            ingredients = []
-            ingredients_text = product_data.get('ingredients', '')
-            if ingredients_text:
-                ingredients = self._extract_ingredients_from_text(ingredients_text)
-            
-            # How to use
-            how_to_use = product_data.get('howToUse', '')
-            if how_to_use:
-                how_to_use = self._clean_html_text(how_to_use)
-            
-            # Images
-            images = []
-            if product_data.get('imageUrl'):
-                images.append(product_data['imageUrl'])
-            
-            # Add images from media array
-            media = product_data.get('media', [])
-            if isinstance(media, list):
-                for media_item in media:
-                    if isinstance(media_item, dict) and media_item.get('url'):
-                        images.append(media_item['url'])
-            
-            # Add images from carousel
-            carousel = product_data.get('carousel', [])
-            if isinstance(carousel, list):
-                for carousel_item in carousel:
-                    if isinstance(carousel_item, dict) and carousel_item.get('url'):
-                        images.append(carousel_item['url'])
-            
-            # Remove duplicates from images
-            images = list(dict.fromkeys(images))
-            
-            # Variants
-            variants = self._extract_variants_from_json(product_data)
-            
-            # Specifications
-            specifications = {}
-            if product_data.get('packSize'):
-                specifications['Pack Size'] = product_data['packSize']
-            if product_data.get('expiry'):
-                specifications['Expiry'] = product_data['expiry']
-            if product_data.get('sku'):
-                specifications['SKU'] = product_data['sku']
-            
-            # Manufacture details
-            manufacture = product_data.get('manufacture', [])
-            if manufacture and isinstance(manufacture, list) and len(manufacture) > 0:
-                mfg_info = manufacture[0]
-                if isinstance(mfg_info, dict):
-                    specifications.update({
-                        'Manufacturer': mfg_info.get('manufacturerName', ''),
-                        'Country of Origin': mfg_info.get('originOfCountryName', ''),
-                        'Importer': mfg_info.get('importerName', '')
-                    })
-            
-            # Tags
-            tags = product_data.get('tags', [])
-            if not isinstance(tags, list):
-                tags = []
-            
-            # Availability
-            availability = "In Stock" if product_data.get('inStock', False) else "Out of Stock"
-            
-            # Delivery and return info
-            delivery_info = ""
-            return_policy = product_data.get('returnMessage', product_data.get('messageOnReturn', ''))
-            
-            # Seller info
-            seller_info = SellerInfo(
-                seller_name=product_data.get('sellerName', 'Nykaa'),
-                seller_id=None,
-                brand_name=brand,
-                brand_id=None,
-                seller_rating=None,
-                seller_reviews_count=None,
-                brand_description=None,
-                official_store=True
-            )
+            name = self._get_text_by_selectors(soup, ['h1', '.product-title'], "Unknown Product")
+            brand = self._get_text_by_selectors(soup, ['.brand-name'], "Unknown Brand")
             
             return ProductInfo(
-                product_id=product_id,
+                product_id=self._extract_product_id_from_url(product_url),
                 name=name,
                 brand=brand,
-                category=category,
-                subcategory=subcategory,
-                price=price,
-                discounted_price=discounted_price,
-                discount_percentage=discount_percentage,
-                rating=rating,
-                review_count=review_count,
-                description=description,
-                key_features=key_features,
-                ingredients=ingredients,
-                how_to_use=how_to_use,
-                images=images,
-                variants=variants,
-                seller_info=seller_info,
-                reviews=[],  # Will be populated by _extract_reviews
-                specifications=specifications,
-                tags=tags,
-                availability=availability,
-                delivery_info=delivery_info,
-                return_policy=return_policy,
-                scraped_at="",
-                product_url=product_url
-            )
-            
-        except Exception as e:
-            logger.error(f"Error extracting from JSON data: {e}")
-            # Fallback to HTML extraction
-            return self._extract_from_html_fallback(None, product_url)
-
-    def _extract_from_html_fallback(self, soup: BeautifulSoup, product_url: str) -> Optional[ProductInfo]:
-        """Fallback method to extract from HTML when JSON extraction fails"""
-        try:
-            if not soup:
-                return None
-                
-            # Product name
-            name_selectors = ['h1', '.product-title', '[data-testid="product-title"]']
-            name = self._get_text_by_selectors(soup, name_selectors, "Unknown Product")
-            
-            # Brand - try to extract from JSON in script tags first
-            brand = "Unknown Brand"
-            script_tags = soup.find_all('script')
-            for script in script_tags:
-                if script.string and '"brandName"' in script.string:
-                    try:
-                        brand_match = re.search(r'"brandName":"([^"]+)"', script.string)
-                        if brand_match:
-                            brand = brand_match.group(1)
-                            break
-                    except:
-                        continue
-            
-            if brand == "Unknown Brand":
-                brand_selectors = ['.brand-name', '[data-testid="brand-name"]', '.brand']
-                brand = self._get_text_by_selectors(soup, brand_selectors, "Unknown Brand")
-            
-            # Category and subcategory
-            breadcrumb = soup.find('nav', {'aria-label': 'breadcrumb'}) or soup.find('.breadcrumb')
-            category = subcategory = "Unknown"
-            
-            if breadcrumb:
-                crumbs = breadcrumb.find_all('a')
-                if len(crumbs) >= 2:
-                    category = crumbs[1].get_text(strip=True)
-                if len(crumbs) >= 3:
-                    subcategory = crumbs[2].get_text(strip=True)
-            
-            # Price information - try JSON first
-            price = 0
-            discounted_price = None
-            
-            for script in script_tags:
-                if script.string and '"mrp"' in script.string:
-                    try:
-                        mrp_match = re.search(r'"mrp":(\d+)', script.string)
-                        offer_match = re.search(r'"offerPrice":(\d+)', script.string)
-                        if mrp_match:
-                            price = float(mrp_match.group(1))
-                        if offer_match:
-                            discounted_price = float(offer_match.group(1))
-                        if price > 0:
-                            break
-                    except:
-                        continue
-            
-            if price == 0:
-                price_selectors = ['.price', '[data-testid="price"]', '.product-price']
-                price_text = self._get_text_by_selectors(soup, price_selectors, "0")
-                price = self._extract_price(price_text)
-                
-                discounted_price_selectors = ['.discounted-price', '.sale-price', '.offer-price']
-                discounted_price_text = self._get_text_by_selectors(soup, discounted_price_selectors)
-                discounted_price = self._extract_price(discounted_price_text) if discounted_price_text else None
-            
-            # Calculate discount percentage
-            discount_percentage = None
-            if discounted_price and price and price > 0:
-                discount_percentage = round(((price - discounted_price) / price) * 100, 2)
-            
-            # Rating and review count - try JSON first
-            rating = 0
-            review_count = 0
-            
-            for script in script_tags:
-                if script.string and '"rating"' in script.string:
-                    try:
-                        rating_match = re.search(r'"rating":([0-9.]+)', script.string)
-                        review_match = re.search(r'"reviewCount":"?(\d+)"?', script.string)
-                        if rating_match:
-                            rating = float(rating_match.group(1))
-                        if review_match:
-                            review_count = int(review_match.group(1))
-                        if rating > 0:
-                            break
-                    except:
-                        continue
-            
-            if rating == 0:
-                rating_selectors = ['.rating', '[data-testid="rating"]', '.star-rating']
-                rating_text = self._get_text_by_selectors(soup, rating_selectors, "0")
-                rating = self._extract_rating(rating_text)
-                
-                review_count_selectors = ['.review-count', '[data-testid="review-count"]', '.reviews-count']
-                review_count_text = self._get_text_by_selectors(soup, review_count_selectors, "0")
-                review_count = self._extract_number(review_count_text)
-            
-            # Extract product ID from URL
-            product_id = self._extract_product_id(product_url)
-            
-            return ProductInfo(
-                product_id=product_id,
-                name=name,
-                brand=brand,
-                category=category,
-                subcategory=subcategory,
-                price=price,
-                discounted_price=discounted_price,
-                discount_percentage=discount_percentage,
-                rating=rating,
-                review_count=review_count,
+                category="Unknown",
+                subcategory="Unknown",
+                price=0.0,
+                discounted_price=None,
+                discount_percentage=None,
+                rating=0.0,
+                review_count=0,
                 description="",
                 key_features=[],
                 ingredients=[],
@@ -1508,822 +816,549 @@ class NykaaScraper:
                 scraped_at="",
                 product_url=product_url
             )
-            
-        except Exception as e:
-            logger.error(f"Error in HTML fallback extraction: {e}")
+        except Exception:
             return None
 
-    def _clean_html_text(self, html_text: str) -> str:
-        """Clean HTML tags and entities from text"""
-        if not html_text:
-            return ""
-        
-        # Remove HTML tags
-        import re
-        text = re.sub(r'<[^>]+>', '', html_text)
-        
-        # Decode HTML entities
-        import html
-        text = html.unescape(text)
-        
-        # Clean up whitespace
-        text = ' '.join(text.split())
-        
-        return text.strip()
-
-    def _extract_ingredients_from_text(self, ingredients_text: str) -> List[str]:
-        """Extract ingredients list from text"""
-        if not ingredients_text:
-            return []
-        
-        # Clean HTML
-        clean_text = self._clean_html_text(ingredients_text)
-        
-        # Look for ingredients section
-        ingredients_match = re.search(r'Ingredients[:\s]*(.+)', clean_text, re.IGNORECASE | re.DOTALL)
-        if ingredients_match:
-            ingredients_part = ingredients_match.group(1)
-        else:
-            ingredients_part = clean_text
-        
-        # Split by common delimiters
-        ingredients = []
-        for delimiter in [',', ';', '\n']:
-            if delimiter in ingredients_part:
-                ingredients = [ing.strip() for ing in ingredients_part.split(delimiter) if ing.strip()]
-                break
-        
-        # If no delimiters found, return as single ingredient
-        if not ingredients and ingredients_part.strip():
-            ingredients = [ingredients_part.strip()]
-        
-        return ingredients[:20]  # Limit to 20 ingredients
-
-    def _extract_variants_from_json(self, product_data: dict) -> List[ProductVariant]:
-        """Extract product variants from JSON data"""
-        variants = []
-        
-        try:
-            # Check for variant data in children
-            children = product_data.get('children', [])
-            if isinstance(children, list):
-                for child in children:
-                    if isinstance(child, dict):
-                        variant_name = child.get('variantName', child.get('name', ''))
-                        if variant_name:
-                            variants.append(ProductVariant(
-                                name=variant_name,
-                                price=child.get('mrp'),
-                                discounted_price=child.get('offerPrice'),
-                                availability="In Stock" if child.get('inStock', False) else "Out of Stock",
-                                variant_id=str(child.get('childId', child.get('id', '')))
-                            ))
-            
-            # Check for selected variant
-            selected_variant = product_data.get('selectedVariantName')
-            if selected_variant and not any(v.name == selected_variant for v in variants):
-                variants.append(ProductVariant(
-                    name=selected_variant,
-                    price=product_data.get('mrp'),
-                    discounted_price=product_data.get('offerPrice'),
-                    availability="In Stock" if product_data.get('inStock', False) else "Out of Stock",
-                    variant_id=str(product_data.get('selectedVariantId', ''))
-                ))
-        
-        except Exception as e:
-            logger.warning(f"Error extracting variants from JSON: {e}")
-        
-        return variants
-    
-    def _extract_description(self, soup: BeautifulSoup) -> str:
-        """Extract product description"""
-        desc_selectors = [
-            '.product-description', 
-            '[data-testid="product-description"]',
-            '.description',
-            '.about-product',
-            '.product-details'
-        ]
-        return self._get_text_by_selectors(soup, desc_selectors, "")
-    
-    def _extract_key_features(self, soup: BeautifulSoup) -> List[str]:
-        """Extract key features list"""
-        features = []
-        feature_selectors = [
-            '.key-features li',
-            '.features li',
-            '.highlights li',
-            '.product-features li'
-        ]
-        
-        for selector in feature_selectors:
-            elements = soup.select(selector)
-            if elements:
-                features = [elem.get_text(strip=True) for elem in elements]
-                break
-        
-        return features
-    
-    def _extract_ingredients(self, soup: BeautifulSoup) -> List[str]:
-        """Extract ingredients list"""
-        ingredients = []
-        ing_selectors = [
-            '.ingredients',
-            '.ingredient-list',
-            '[data-testid="ingredients"]'
-        ]
-        
-        for selector in ing_selectors:
-            element = soup.select_one(selector)
-            if element:
-                # Try to find list items first
-                li_elements = element.find_all('li')
-                if li_elements:
-                    ingredients = [li.get_text(strip=True) for li in li_elements]
-                else:
-                    # If no list, split by common delimiters
-                    text = element.get_text(strip=True)
-                    ingredients = [ing.strip() for ing in re.split(r'[,;]', text) if ing.strip()]
-                break
-        
-        return ingredients
-    
-    def _extract_how_to_use(self, soup: BeautifulSoup) -> str:
-        """Extract how to use instructions"""
-        use_selectors = [
-            '.how-to-use',
-            '.usage-instructions',
-            '.directions',
-            '[data-testid="how-to-use"]'
-        ]
-        return self._get_text_by_selectors(soup, use_selectors, "")
-    
-    def _extract_images(self, soup: BeautifulSoup) -> List[str]:
-        """Extract product images"""
-        images = []
-        img_selectors = [
-            '.product-images img',
-            '.image-gallery img',
-            '.product-gallery img',
-            '[data-testid="product-image"] img'
-        ]
-        
-        for selector in img_selectors:
-            img_elements = soup.select(selector)
-            if img_elements:
-                for img in img_elements:
-                    src = img.get('src') or img.get('data-src')
-                    if src and src not in images:
-                        if src.startswith('//'):
-                            src = 'https:' + src
-                        elif src.startswith('/'):
-                            src = urljoin(self.base_url, src)
-                        images.append(src)
-        
-        return list(set(images))  # Remove duplicates
-    
-    def _extract_variants(self, soup: BeautifulSoup) -> List[ProductVariant]:
-        """Extract product variants (size, color, etc.)"""
-        variants = []
-        
-        # Look for size variants
-        size_selectors = [
-            '.size-options .option',
-            '.variant-size',
-            '[data-testid="size-option"]'
-        ]
-        
-        # Look for color variants
-        color_selectors = [
-            '.color-options .option',
-            '.variant-color',
-            '[data-testid="color-option"]'
-        ]
-        
-        # Extract size variants
-        for selector in size_selectors:
-            elements = soup.select(selector)
-            for elem in elements:
-                name = elem.get_text(strip=True)
-                if name:
-                    variants.append(ProductVariant(
-                        name=name,
-                        price=None,
-                        discounted_price=None,
-                        availability="Unknown",
-                        variant_id=elem.get('data-id')
-                    ))
-        
-        # Extract color variants
-        for selector in color_selectors:
-            elements = soup.select(selector)
-            for elem in elements:
-                name = elem.get('title') or elem.get_text(strip=True)
-                if name:
-                    variants.append(ProductVariant(
-                        name=name,
-                        price=None,
-                        discounted_price=None,
-                        availability="Unknown",
-                        variant_id=elem.get('data-id')
-                    ))
-        
-        return variants
-    
-    def _extract_specifications(self, soup: BeautifulSoup) -> Dict[str, Any]:
-        """Extract product specifications"""
-        specs = {}
-        
-        spec_selectors = [
-            '.specifications',
-            '.product-specs',
-            '.details-table',
-            '[data-testid="specifications"]'
-        ]
-        
-        for selector in spec_selectors:
-            spec_section = soup.select_one(selector)
-            if spec_section:
-                # Look for key-value pairs in various formats
-                rows = spec_section.find_all(['tr', 'div'])
-                for row in rows:
-                    cells = row.find_all(['td', 'span', 'div'])
-                    if len(cells) >= 2:
-                        key = cells[0].get_text(strip=True)
-                        value = cells[1].get_text(strip=True)
-                        if key and value:
-                            specs[key] = value
-                break
-        
-        return specs
-    
-    def _extract_tags(self, soup: BeautifulSoup) -> List[str]:
-        """Extract product tags"""
-        tags = []
-        tag_selectors = [
-            '.product-tags .tag',
-            '.badges .badge',
-            '.labels .label'
-        ]
-        
-        for selector in tag_selectors:
-            elements = soup.select(selector)
-            if elements:
-                tags = [elem.get_text(strip=True) for elem in elements]
-                break
-        
-        return tags
-    
-    def _extract_availability(self, soup: BeautifulSoup) -> str:
-        """Extract availability status"""
-        avail_selectors = [
-            '.availability',
-            '.stock-status',
-            '[data-testid="availability"]'
-        ]
-        return self._get_text_by_selectors(soup, avail_selectors, "Unknown")
-    
-    def _extract_delivery_info(self, soup: BeautifulSoup) -> str:
-        """Extract delivery information"""
-        delivery_selectors = [
-            '.delivery-info',
-            '.shipping-info',
-            '[data-testid="delivery-info"]'
-        ]
-        return self._get_text_by_selectors(soup, delivery_selectors, "")
-    
-    def _extract_return_policy(self, soup: BeautifulSoup) -> str:
-        """Extract return policy"""
-        return_selectors = [
-            '.return-policy',
-            '.returns-info',
-            '[data-testid="return-policy"]'
-        ]
-        return self._get_text_by_selectors(soup, return_selectors, "")
-    
-    def _extract_seller_info(self, soup: BeautifulSoup) -> SellerInfo:
-        """Extract seller/brand information"""
-        seller_name_selectors = ['.seller-name', '.brand-store', '[data-testid="seller-name"]']
-        seller_name = self._get_text_by_selectors(soup, seller_name_selectors, "Unknown Seller")
-        
-        brand_name_selectors = ['.brand-name', '[data-testid="brand-name"]']
-        brand_name = self._get_text_by_selectors(soup, brand_name_selectors, "Unknown Brand")
-        
-        return SellerInfo(
-            seller_name=seller_name,
-            seller_id=None,
-            brand_name=brand_name,
-            brand_id=None,
-            seller_rating=None,
-            seller_reviews_count=None,
-            brand_description=None,
-            official_store=False
-        )
-    
-    def _extract_reviews_with_driver(self, driver, product_url: str) -> List[Review]:
-        """Extract product reviews by navigating to dedicated reviews page"""
+    def _extract_reviews_with_load_more(self, driver, product_url: str) -> List[Review]:
+        """Enhanced review extraction with proper Load More button handling and JSON parsing"""
         reviews = []
         
         try:
-            # First, try to get product ID and SKU from the current page
-            product_id, sku_id = self._extract_product_and_sku_ids(product_url, driver)
+            # Navigate to reviews page
+            product_id = self._extract_product_id_from_url(product_url)
+            if not product_id:
+                return reviews
             
-            if product_id:
-                # Extract the product slug from the current URL for the reviews URL
-                product_slug = self._extract_product_slug(product_url)
+            # Build reviews URL
+            product_slug = self._extract_product_slug(product_url)
+            if product_slug:
+                reviews_url = f"{self.base_url}/{product_slug}/reviews/{product_id}?ptype=reviews"
+            else:
+                reviews_url = f"{product_url}/reviews"
+            
+            logger.info(f"Extracting reviews from: {reviews_url}")
+            driver.get(reviews_url)
+            
+            # Wait for initial content to load
+            time.sleep(self.review_load_wait_time)
+            
+            # Handle popups
+            self._handle_review_page_popups(driver)
+            
+            # Extract initial reviews from JSON data
+            seen_reviews = set()
+            initial_reviews = self._extract_reviews_from_json(driver)
+            
+            for review in initial_reviews:
+                review_id = f"{review.user_info.username}_{review.rating}_{review.content[:50]}_{review.date}"
+                if review_id not in seen_reviews:
+                    seen_reviews.add(review_id)
+                    reviews.append(review)
+            
+            logger.info(f"Extracted {len(reviews)} initial reviews from JSON data")
+            
+            # Now try to load more reviews by scrolling and clicking Load More
+            load_more_attempts = 0
+            max_load_more_attempts = 50
+            consecutive_no_new = 0
+            
+            while (load_more_attempts < max_load_more_attempts and 
+                   consecutive_no_new < self.max_consecutive_no_new and
+                   len(reviews) < self.max_reviews_per_product):
                 
-                # Navigate to the dedicated reviews page
-                if product_slug:
-                    reviews_url = f"{self.base_url}/{product_slug}/reviews/{product_id}"
+                # Scroll to bottom to trigger Load More button
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(3)  # Wait for button to appear
+                
+                # Try to click Load More button
+                load_more_clicked = self._click_load_more_button(driver)
+                
+                if load_more_clicked:
+                    load_more_attempts += 1
+                    logger.info(f"Clicked Load More button (attempt {load_more_attempts})")
+                    
+                    # Wait for new content to load
+                    time.sleep(5)
+                    
+                    # Extract new reviews from updated JSON data
+                    current_reviews = self._extract_reviews_from_json(driver)
+                    new_count = 0
+                    
+                    for review in current_reviews:
+                        review_id = f"{review.user_info.username}_{review.rating}_{review.content[:50]}_{review.date}"
+                        if review_id not in seen_reviews:
+                            seen_reviews.add(review_id)
+                            reviews.append(review)
+                            new_count += 1
+                    
+                    logger.info(f"Extracted {new_count} new reviews after Load More (total: {len(reviews)})")
+                    
+                    if new_count == 0:
+                        consecutive_no_new += 1
+                    else:
+                        consecutive_no_new = 0
+                    
                 else:
-                    # Fallback to a generic reviews URL pattern
-                    reviews_url = f"{self.base_url}/reviews/{product_id}"
-                
-                if sku_id:
-                    reviews_url += f"?skuId={sku_id}&ptype=reviews"
-                else:
-                    reviews_url += "?ptype=reviews"
-                
-                logger.info(f"Navigating to reviews page: {reviews_url}")
-                driver.get(reviews_url)
-                self.random_delay()
-                
-                # Handle any popups
-                self._handle_popups_with_driver(driver)
-                
-                # Wait for reviews to load
-                try:
-                    WebDriverWait(driver, 15).until(
-                        EC.any_of(
-                            EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='review-card']")),
-                            EC.presence_of_element_located((By.CSS_SELECTOR, ".review-card")),
-                            EC.presence_of_element_located((By.CSS_SELECTOR, ".consumer-review")),
-                            EC.presence_of_element_located((By.CSS_SELECTOR, "[class*='review']"))
-                        )
-                    )
-                except TimeoutException:
-                    logger.warning("No reviews found on dedicated reviews page")
-                    return self._extract_reviews_from_current_page_driver(driver)
-                
-                # Implement infinite scrolling to load all reviews
-                reviews = self._scrape_reviews_with_infinite_scroll_driver(driver)
-                
-                if reviews:
-                    logger.info(f"Successfully extracted {len(reviews)} reviews from dedicated page")
-                    return reviews
+                    # No Load More button found, try scrolling a bit more
+                    consecutive_no_new += 1
+                    if consecutive_no_new >= 3:
+                        logger.info("No Load More button found and no new reviews - stopping")
+                        break
+                    
+                    # Try additional scrolling strategies
+                    driver.execute_script("window.scrollBy(0, window.innerHeight);")
+                    time.sleep(2)
             
-            # Fallback to extracting from current product page
-            logger.info("Falling back to current page review extraction")
-            return self._extract_reviews_from_current_page_driver(driver)
-            
+            logger.info(f"Review extraction completed: {len(reviews)} total reviews")
+            logger.info(f"Load More clicks: {load_more_attempts}")
+        
         except Exception as e:
             logger.error(f"Error extracting reviews: {e}")
-            return self._extract_reviews_from_current_page_driver(driver)
+        
+        return reviews[:self.max_reviews_per_product]
 
-    def _extract_reviews(self, product_url: str) -> List[Review]:
-        """Extract product reviews by navigating to dedicated reviews page"""
-        if not self.driver:
-            self.setup_driver()
-        return self._extract_reviews_with_driver(self.driver, product_url)
-
-    def _extract_product_slug(self, product_url: str) -> str:
-        """Extract the product slug from URL for building reviews URL"""
-        try:
-            # Extract everything between base URL and /p/
-            # Example: https://www.nykaa.com/m-a-c-macximal-matte-lipstick/p/13784071
-            # Should extract: m-a-c-macximal-matte-lipstick
-            
-            url_path = product_url.replace(self.base_url, '').strip('/')
-            
-            # Split by /p/ and take the first part
-            if '/p/' in url_path:
-                product_slug = url_path.split('/p/')[0]
-                return product_slug
-            
-            # Alternative pattern: extract from path before product ID
-            slug_match = re.search(r'/([^/]+)/p/\d+', product_url)
-            if slug_match:
-                return slug_match.group(1)
-            
-            return None
-            
-        except Exception as e:
-            logger.warning(f"Error extracting product slug: {e}")
-            return None
-
-    def _extract_product_and_sku_ids(self, product_url: str, driver=None) -> tuple:
-        """Extract product ID and SKU ID from current page or URL"""
-        product_id = None
-        sku_id = None
+    def _extract_reviews_from_json(self, driver) -> List[Review]:
+        """Extract reviews from the embedded JSON data in page source"""
+        reviews = []
         
         try:
-            # Method 1: Extract from URL pattern
-            # Pattern: /p/12345 or /product/12345 or ?productId=12345
-            url_patterns = [
-                r'/p/(\d+)',
-                r'/product/(\d+)',
-                r'productId[=:](\d+)',
-                r'/(\d+)(?:/|\?|$)'  # Last number before query or end
+            page_source = driver.page_source
+            
+            # Find the start of the reviews array using a simpler, more reliable method
+            start_pattern = r'"getReviews":\s*\{\s*"Reviews":\s*\{\s*"reviews":\s*\['
+            start_match = re.search(start_pattern, page_source)
+            
+            if start_match:
+                start_pos = start_match.end()
+                logger.debug(f"Found reviews array start at position {start_pos}")
+                
+                # Find the matching closing bracket for the reviews array
+                bracket_count = 1  # We already have the opening [
+                end_pos = start_pos
+                
+                for i, char in enumerate(page_source[start_pos:], start_pos):
+                    if char == '[':
+                        bracket_count += 1
+                    elif char == ']':
+                        bracket_count -= 1
+                        if bracket_count == 0:
+                            end_pos = i
+                            break
+                
+                if end_pos > start_pos:
+                    reviews_json = page_source[start_pos:end_pos]
+                    logger.debug(f"Extracted reviews JSON, length: {len(reviews_json)}")
+                    
+                    try:
+                        # Parse the reviews array
+                        reviews_data = json.loads('[' + reviews_json + ']')
+                        logger.debug(f"Successfully parsed {len(reviews_data)} reviews from JSON")
+                        
+                        for review_data in reviews_data:
+                            review = self._parse_review_from_json(review_data)
+                            if review:
+                                reviews.append(review)
+                        
+                        return reviews
+                    except json.JSONDecodeError as e:
+                        logger.debug(f"Error parsing reviews JSON: {e}")
+                else:
+                    logger.debug("Could not find end of reviews array")
+            else:
+                logger.debug("Could not find reviews array start pattern")
+            
+            # Fallback: try alternative patterns
+            logger.debug("Trying fallback patterns...")
+            
+            # Try to find any reviews data in alternative locations
+            alternative_patterns = [
+                r'"reviews":\s*\[([^\]]+)\]',
+                r'"reviewsList":\s*\[([^\]]+)\]',
+                r'"latestReviews":\s*\[([^\]]+)\]'
             ]
             
-            for pattern in url_patterns:
-                url_match = re.search(pattern, product_url)
-                if url_match:
-                    product_id = url_match.group(1)
-                    logger.info(f"Extracted product ID from URL pattern '{pattern}': {product_id}")
-                    break
-            
-            # Method 2: Extract from current page JSON data if driver is provided
-            if driver:
-                try:
-                    soup = BeautifulSoup(driver.page_source, 'html.parser')
-                    script_tags = soup.find_all('script')
-                    
-                    for script in script_tags:
-                        if script.string and any(term in script.string for term in ['productId', 'parentId', 'skuId']):
-                            try:
-                                # Look for various ID patterns in JSON
-                                id_patterns = [
-                                    (r'"productId":"?(\d+)"?', 'productId'),
-                                    (r'"parentId":"?(\d+)"?', 'parentId'),
-                                    (r'"id":"?(\d+)"?', 'id'),
-                                    (r'"skuId":"?(\d+)"?', 'skuId')
-                                ]
-                                
-                                for pattern, field_name in id_patterns:
-                                    matches = re.findall(pattern, script.string)
-                                    if matches:
-                                        if field_name == 'skuId':
-                                            sku_id = matches[0]
-                                            logger.info(f"Extracted SKU ID from {field_name}: {sku_id}")
-                                        elif not product_id:  # Only set product_id if not already found
-                                            product_id = matches[0]
-                                            logger.info(f"Extracted product ID from {field_name}: {product_id}")
-                                
-                                if product_id:
-                                    break
-                            except Exception as e:
-                                logger.warning(f"Error parsing script for IDs: {e}")
-                                continue
-                except Exception as e:
-                    logger.warning(f"Error getting page source: {e}")
-            
-            # Method 3: Try to extract from URL query parameters
-            if '?' in product_url:
-                from urllib.parse import parse_qs, urlparse
-                try:
-                    parsed_url = urlparse(product_url)
-                    query_params = parse_qs(parsed_url.query)
-                    
-                    if 'productId' in query_params:
-                        product_id = query_params['productId'][0]
-                        logger.info(f"Extracted product ID from query params: {product_id}")
-                    if 'skuId' in query_params:
-                        sku_id = query_params['skuId'][0]
-                        logger.info(f"Extracted SKU ID from query params: {sku_id}")
-                except Exception as e:
-                    logger.warning(f"Error parsing URL query parameters: {e}")
-            
-            # Method 4: Fallback - try to extract from page title or breadcrumbs
-            if not product_id and driver:
-                try:
-                    soup = BeautifulSoup(driver.page_source, 'html.parser')
-                    # Look for data attributes
-                    product_containers = soup.find_all(['div', 'section'], attrs={'data-product-id': True})
-                    for container in product_containers:
-                        data_id = container.get('data-product-id')
-                        if data_id and data_id.isdigit():
-                            product_id = data_id
-                            logger.info(f"Extracted product ID from data attribute: {product_id}")
-                            break
-                except Exception as e:
-                    logger.warning(f"Error parsing page for data attributes: {e}")
-            
-            logger.info(f"Final extracted IDs - Product ID: {product_id}, SKU ID: {sku_id}")
-            return product_id, sku_id
-            
-        except Exception as e:
-            logger.warning(f"Error extracting product/SKU IDs: {e}")
-            return None, None
-
-    def _scrape_reviews_with_infinite_scroll_driver(self, driver):
-        """Scrape reviews with infinite scrolling to get all available reviews"""
-        reviews = []
-        seen_reviews = set()
-        scroll_attempts = 0
-        max_scroll_attempts = 100  # Increase attempts to get more reviews
-        consecutive_no_new_reviews = 0
-        max_consecutive_no_new = 8  # Allow more attempts before giving up
-        
-        try:
-            # Wait for the page to fully load
-            time.sleep(5)
-            
-            while scroll_attempts < max_scroll_attempts and consecutive_no_new_reviews < max_consecutive_no_new:
-                # Get current page reviews
-                current_reviews = self._extract_reviews_from_current_reviews_page_driver(driver)
-                new_reviews_count = 0
-                
-                for review in current_reviews:
-                    # Create a unique identifier for each review to avoid duplicates
-                    review_identifier = f"{review.user_info.username}_{review.rating}_{review.content[:50]}"
-                    if review_identifier not in seen_reviews:
-                        seen_reviews.add(review_identifier)
-                        reviews.append(review)
-                        new_reviews_count += 1
-                
-                logger.info(f"Scroll {scroll_attempts + 1}: Found {len(current_reviews)} reviews, {new_reviews_count} new. Total: {len(reviews)}")
-                
-                if new_reviews_count == 0:
-                    consecutive_no_new_reviews += 1
-                else:
-                    consecutive_no_new_reviews = 0
-                
-                # Scroll down to load more reviews
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                self.random_delay()
-                
-                # Try to click "Load More" or "Show More" buttons if present
-                load_more_selectors = [
-                    "button:contains('Load more')",
-                    "button:contains('Show more')",
-                    ".load-more-reviews",
-                    ".show-more-reviews",
-                    "[aria-label*='Load more']",
-                    "[aria-label*='Show more']"
-                ]
-                
-                button_clicked = False
-                for selector in load_more_selectors:
+            for pattern in alternative_patterns:
+                match = re.search(pattern, page_source, re.DOTALL)
+                if match:
                     try:
-                        if ":contains" in selector:
-                            # Handle contains selector manually since Selenium doesn't support it
-                            if "Load more" in selector:
-                                buttons = driver.find_elements(By.XPATH, "//button[contains(text(), 'Load more')]")
-                            elif "Show more" in selector:
-                                buttons = driver.find_elements(By.XPATH, "//button[contains(text(), 'Show more')]")
-                            else:
-                                buttons = []
-                        else:
-                            buttons = driver.find_elements(By.CSS_SELECTOR, selector)
+                        reviews_json = '[' + match.group(1) + ']'
+                        reviews_data = json.loads(reviews_json)
                         
-                        for button in buttons:
-                            if button.is_displayed() and button.is_enabled():
-                                driver.execute_script("arguments[0].click();", button)
-                                self.random_delay()
-                                button_clicked = True
-                                logger.info(f"Clicked load more button: {selector}")
-                                break
+                        logger.debug(f"Found {len(reviews_data)} reviews using fallback pattern")
                         
-                        if button_clicked:
-                            break
-                    except Exception as e:
-                        logger.debug(f"Error with load more selector {selector}: {e}")
+                        for review_data in reviews_data:
+                            review = self._parse_review_from_json(review_data)
+                            if review:
+                                reviews.append(review)
+                        
+                        if reviews:
+                            return reviews
+                    except json.JSONDecodeError:
                         continue
-                
-                scroll_attempts += 1
-                
-                # Add a small delay between scrolls
-                time.sleep(1)
         
         except Exception as e:
-            logger.error(f"Error during infinite scroll review extraction: {e}")
+            logger.error(f"Error extracting reviews from JSON: {e}")
         
-        logger.info(f"Completed review extraction with infinite scroll. Total reviews: {len(reviews)}")
+        logger.debug(f"Extracted {len(reviews)} reviews from JSON")
         return reviews
+    
+    def _clean_json_text(self, json_text: str) -> str:
+        """Clean JSON text to ensure it's valid"""
+        try:
+            # Remove any trailing commas before closing brackets/braces
+            json_text = re.sub(r',\s*([}\]])', r'\1', json_text)
+            
+            # Ensure proper bracket matching
+            open_brackets = json_text.count('[')
+            close_brackets = json_text.count(']')
+            open_braces = json_text.count('{')
+            close_braces = json_text.count('}')
+            
+            # Add missing closing brackets/braces
+            if open_brackets > close_brackets:
+                json_text += ']' * (open_brackets - close_brackets)
+            if open_braces > close_braces:
+                json_text += '}' * (open_braces - close_braces)
+            
+            return json_text
+        except Exception:
+            return json_text
 
-    def _extract_reviews_from_current_reviews_page_driver(self, driver):
-        """Extract reviews from the current reviews page HTML using reliable selectors"""
+    def _parse_review_from_json(self, review_data: dict) -> Optional[Review]:
+        """Parse a single review from JSON data"""
+        try:
+            # Extract username
+            username = review_data.get('name', review_data.get('userName', 'Anonymous'))
+            
+            # Extract rating
+            rating = int(review_data.get('rating', 0))
+            
+            # Extract title
+            title = review_data.get('title', '')
+            
+            # Extract content/description
+            content = review_data.get('description', review_data.get('content', ''))
+            
+            # Extract date
+            date = review_data.get('createdOn', review_data.get('date', ''))
+            # Clean date format
+            if date and len(date) > 10:
+                date = date.split(' ')[0]  # Keep only the date part
+            
+            # Extract helpful count
+            helpful_count = int(review_data.get('likeCount', 0))
+            
+            # Extract verified buyer status
+            verified_purchase = review_data.get('label') == 'Verified Buyer' or review_data.get('isBuyer', False)
+            
+            # Only create review if we have minimum required info
+            if rating > 0 and (content or title) and username != 'Anonymous':
+                return Review(
+                    review_id=review_data.get('id'),
+                    user_info=UserInfo(username, None, verified_purchase, None, None, None),
+                    rating=rating,
+                    title=title,
+                    content=content,
+                    date=date,
+                    helpful_count=helpful_count,
+                    verified_purchase=verified_purchase,
+                    images=[],
+                    pros=[],
+                    cons=[]
+                )
+        except Exception as e:
+            logger.debug(f"Error parsing review from JSON: {e}")
+        
+        return None
+
+    def _click_load_more_button(self, driver) -> bool:
+        """Click the Load More button with enhanced detection and error handling"""
+        
+        # List of selectors to try for Load More button (most specific first)
+        load_more_selectors = [
+            # Specific selectors based on the provided HTML structure
+            ".css-1a51j15 button.css-u04n34",
+            "div[class*='css-1a51j15'] button[class*='css-u04n34']",
+            "button.css-u04n34",
+            ".css-1a51j15 button",
+            
+            # Generic Load More selectors as fallback
+            "button[class*='load-more']",
+            "button[class*='Load']",
+            ".load-more-reviews button",
+            ".load-more button",
+            "button[aria-label*='Load More']",
+            "button[aria-label*='load more']",
+            
+            # Text-based XPath selectors (most reliable)
+            "//button[contains(text(), 'Load More')]",
+            "//button[contains(text(), 'LOAD MORE')]", 
+            "//button[contains(text(), 'Show More')]",
+            "//button[contains(text(), 'View More')]",
+            "//button[contains(text(), 'More Reviews')]",
+            "//a[contains(text(), 'Load More')]",
+            "//a[contains(text(), 'Show More')]",
+            
+            # Generic button patterns
+            "//button[contains(@class, 'load') or contains(@class, 'more')]",
+            "//div[contains(@class, 'load-more')]//button",
+        ]
+        
+        for selector in load_more_selectors:
+            try:
+                if selector.startswith("//"):
+                    # XPath selector
+                    buttons = driver.find_elements(By.XPATH, selector)
+                else:
+                    # CSS selector  
+                    buttons = driver.find_elements(By.CSS_SELECTOR, selector)
+                
+                for button in buttons:
+                    try:
+                        # Check if button is visible and enabled
+                        if button.is_displayed() and button.is_enabled():
+                            # Check button text to confirm it's the right button
+                            button_text = button.text.lower().strip()
+                            if any(keyword in button_text for keyword in ['load more', 'show more', 'view more', 'more reviews']):
+                                # Scroll to button to ensure it's in view
+                                driver.execute_script("arguments[0].scrollIntoView({block: 'center', behavior: 'smooth'});", button)
+                                time.sleep(1)
+                                
+                                # Wait for button to be clickable
+                                try:
+                                    WebDriverWait(driver, 3).until(EC.element_to_be_clickable(button))
+                                except TimeoutException:
+                                    pass
+                                
+                                # Try different click methods
+                                try:
+                                    # Method 1: Regular click
+                                    button.click()
+                                    logger.info(f"Successfully clicked Load More button using selector: {selector}")
+                                    return True
+                                except Exception:
+                                    try:
+                                        # Method 2: JavaScript click
+                                        driver.execute_script("arguments[0].click();", button)
+                                        logger.info(f"Successfully clicked Load More button via JavaScript using selector: {selector}")
+                                        return True
+                                    except Exception:
+                                        continue
+                    except Exception as e:
+                        logger.debug(f"Failed to click button with selector {selector}: {e}")
+                        continue
+            except Exception as e:
+                logger.debug(f"Error finding button with selector {selector}: {e}")
+                continue
+        
+        # If no Load More button found, try looking for pagination or infinite scroll indicators
+        try:
+            # Look for any buttons that might trigger more content loading
+            all_buttons = driver.find_elements(By.TAG_NAME, "button")
+            for button in all_buttons:
+                try:
+                    if button.is_displayed() and button.is_enabled():
+                        button_text = button.text.lower().strip()
+                        if any(keyword in button_text for keyword in ['load', 'more', 'show', 'next']):
+                            logger.info(f"Found potential load more button with text: '{button.text}'")
+                            # Attempt to click it
+                            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
+                            time.sleep(1)
+                            driver.execute_script("arguments[0].click();", button)
+                            logger.info(f"Clicked potential Load More button: '{button.text}'")
+                            return True
+                except Exception:
+                    continue
+        except Exception as e:
+            logger.debug(f"Error in fallback button search: {e}")
+        
+        return False
+
+    def _handle_review_page_popups(self, driver):
+        """Handle popups that might appear on review pages"""
+        popup_selectors = [
+            "button[aria-label='Close']",
+            ".popup-close",
+            ".modal-close", 
+            ".close-btn",
+            "//button[contains(text(), 'Close')]",
+            "//button[contains(text(), 'Skip')]",
+        ]
+        
+        for selector in popup_selectors:
+            try:
+                if selector.startswith("//"):
+                    elements = driver.find_elements(By.XPATH, selector)
+                else:
+                    elements = driver.find_elements(By.CSS_SELECTOR, selector)
+                
+                for element in elements:
+                    if element.is_displayed():
+                        element.click()
+                        logger.info("Closed popup on review page")
+                        time.sleep(1)
+                        return
+            except Exception:
+                continue
+
+    def _scroll_for_reviews(self, driver):
+        """Scroll page to trigger lazy loading of reviews"""
+        try:
+            # Multiple scroll strategies
+            
+            # 1. Scroll to bottom
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(1)
+            
+            # 2. Scroll by viewport height
+            driver.execute_script("window.scrollBy(0, window.innerHeight);")
+            time.sleep(1)
+            
+            # 3. Smooth scroll to bottom
+            driver.execute_script("""
+                window.scrollTo({
+                    top: document.body.scrollHeight,
+                    behavior: 'smooth'
+                });
+            """)
+            time.sleep(2)
+            
+        except Exception as e:
+            logger.debug(f"Error during scrolling: {e}")
+
+    def _extract_reviews_from_current_page(self, driver) -> List[Review]:
+        """Extract reviews from current page state using semantic selectors"""
         reviews = []
         
         try:
             soup = BeautifulSoup(driver.page_source, 'html.parser')
             
-            # Look for review containers using more reliable selectors
-            # Based on the HTML analysis, reviews are in divs with specific structure
-            review_selectors = [
-                # Look for divs containing "Verified Buyers" text
-                "div:has(span:contains('Verified Buyers'))",
-                # Look for divs containing star ratings
-                "div:has(svg[title='star'])",
-                # Look for divs containing "Helpful" text  
-                "div:has(span:contains('Helpful'))",
-                # Look for sections with userInfoSection
-                "div:has(.userInfoSection)",
-                # Generic review-like containers
-                "div[class*='z7l7ua']",  # From the HTML analysis
-                "section[class*='review']",
-                "article[class*='review']",
-            ]
+            # Strategy 1: Find by "Verified Buyers" text
+            verified_elements = soup.find_all(text=re.compile(r'Verified Buyer', re.I))
             
-            review_elements = []
-            
-            # Try to find review containers
-            for selector in review_selectors:
+            for text_elem in verified_elements[:50]:  # Limit to prevent excessive processing
                 try:
-                    if ":has" in selector or ":contains" in selector:
-                        # Handle these with BeautifulSoup differently
-                        if "Verified Buyers" in selector:
-                            # Find elements containing "Verified Buyers" text
-                            elements = soup.find_all(text=re.compile(r'Verified Buyers', re.I))
-                            parents = []
-                            for elem in elements:
-                                # Go up the DOM tree to find the review container
-                                parent = elem.parent
-                                for _ in range(5):  # Go up max 5 levels
-                                    if parent and parent.name == 'div':
-                                        # Check if this looks like a review container
-                                        if len(parent.find_all(text=re.compile(r'star|helpful|rating', re.I))) > 0:
-                                            parents.append(parent)
-                                            break
-                                    if parent:
-                                        parent = parent.parent
-                                    else:
-                                        break
-                            if parents:
-                                review_elements = parents
-                                logger.info(f"Found {len(review_elements)} review elements using Verified Buyers text")
-                                break
-                        
-                        elif "star" in selector:
-                            # Find star SVG elements and get their containers
-                            star_elements = soup.find_all('svg', title=re.compile(r'star', re.I))
-                            parents = []
-                            for star in star_elements:
-                                parent = star.parent
-                                for _ in range(8):  # Go up max 8 levels to find review container
-                                    if parent and len(str(parent)) > 500:  # Substantial content
-                                        if parent.find(text=re.compile(r'Verified|Helpful|[0-9]+.*found.*helpful', re.I)):
-                                            parents.append(parent)
-                                            break
-                                    if parent:
-                                        parent = parent.parent
-                                    else:
-                                        break
-                            if parents:
-                                review_elements = parents
-                                logger.info(f"Found {len(review_elements)} review elements using star SVG")
-                                break
-                                
-                        elif "Helpful" in selector:
-                            # Find elements containing "Helpful" text
-                            helpful_elements = soup.find_all(text=re.compile(r'\d+.*people found this helpful', re.I))
-                            parents = []
-                            for elem in helpful_elements:
-                                parent = elem.parent
-                                for _ in range(8):  # Go up max 8 levels
-                                    if parent and len(str(parent)) > 300:  # Substantial content
-                                        if parent.find(text=re.compile(r'Verified', re.I)):
-                                            parents.append(parent)
-                                            break
-                                    if parent:
-                                        parent = parent.parent
-                                    else:
-                                        break
-                            if parents:
-                                review_elements = parents
-                                logger.info(f"Found {len(review_elements)} review elements using helpful text")
-                                break
-                    else:
-                        # Standard CSS selector
-                        elements = soup.select(selector)
-                        if elements:
-                            review_elements = elements
-                            logger.info(f"Found {len(review_elements)} review elements with selector: {selector}")
-                            break
-                            
-                except Exception as e:
-                    logger.warning(f"Error with selector {selector}: {e}")
+                    # Navigate up to find review container
+                    container = text_elem.parent
+                    for _ in range(8):  # Look up to 8 levels up
+                        if container and container.name in ['div', 'section', 'article']:
+                            content_text = container.get_text(strip=True)
+                            # Check if this looks like a review container
+                            if (len(content_text) > 50 and 
+                                any(keyword in content_text.lower() for keyword in ['star', 'rating', 'review', 'helpful'])):
+                                review = self._parse_review_semantic(container)
+                                if review:
+                                    reviews.append(review)
+                                    break
+                        container = container.parent if container else None
+                except Exception:
                     continue
             
-            # If no luck with semantic selectors, try the known working class from HTML analysis
-            if not review_elements:
-                # From the HTML, we know reviews are in css-z7l7ua containers
-                review_elements = soup.select("div[class*='z7l7ua']")
-                if review_elements:
-                    logger.info(f"Found {len(review_elements)} review elements using fallback class selector")
-            
-            # Parse each review element
-            for review_elem in review_elements[:50]:  # Limit to 50 reviews
-                review = self._parse_review_from_reviews_page_semantic(review_elem)
-                if review:
-                    reviews.append(review)
+            # Strategy 2: Find by star ratings if not enough reviews
+            if len(reviews) < 10:
+                star_elements = soup.find_all(['svg', 'span'], class_=re.compile(r'star|rating', re.I))
+                for star_elem in star_elements[:30]:
+                    try:
+                        container = star_elem.parent
+                        for _ in range(6):
+                            if container and container.name in ['div', 'section', 'article']:
+                                content_text = container.get_text(strip=True)
+                                if (len(content_text) > 100 and 
+                                    'verified' in content_text.lower()):
+                                    review = self._parse_review_semantic(container)
+                                    if review and not any(r.user_info.username == review.user_info.username and 
+                                                        r.content == review.content for r in reviews):
+                                        reviews.append(review)
+                                        break
+                            container = container.parent if container else None
+                    except Exception:
+                        continue
         
         except Exception as e:
-            logger.error(f"Error extracting reviews from current reviews page: {e}")
+            logger.debug(f"Error extracting reviews from page: {e}")
         
+        logger.debug(f"Extracted {len(reviews)} reviews from current page state")
         return reviews
 
-    def _parse_review_from_reviews_page_semantic(self, review_elem) -> Optional[Review]:
-        """Parse individual review element using semantic/reliable selectors"""
+    def _parse_review_semantic(self, container) -> Optional[Review]:
+        """Parse review using semantic analysis with improved extraction"""
         try:
-            # Extract username using semantic approaches
-            username = "Anonymous"
+            text = container.get_text()
             
-            # Look for username in various ways
-            username_methods = [
-                # Find text near "Verified Buyers"
-                lambda: self._find_text_before_pattern(review_elem, r'Verified Buyers?', max_distance=100),
-                # Find bold/strong text that looks like names
-                lambda: self._find_name_in_element(review_elem, ['strong', 'b', 'span']),
-                # Find text in common username locations
-                lambda: self._get_text_by_selectors_element(review_elem, ['[class*="amd8cf"]'], ""),
-            ]
+            # Extract username (look for text before "Verified Buyer")
+            username_match = re.search(r'(.+?)\s+Verified Buyer', text, re.I)
+            if username_match:
+                username = username_match.group(1).strip()
+                # Clean username (remove extra text)
+                username = re.sub(r'^\s*avatar\s*', '', username, flags=re.I)
+                username = username.split('\n')[0].strip()
+            else:
+                username = "Anonymous"
             
-            for method in username_methods:
-                try:
-                    result = method()
-                    if result and len(result) > 1 and len(result) < 50:  # Reasonable name length
-                        username = result
-                        break
-                except Exception:
-                    continue
-            
-            # Extract verified buyer status
-            verified_purchase = bool(review_elem.find(text=re.compile(r'Verified Buyers?', re.I)))
-            
-            # Extract rating using semantic approaches
+            # Extract rating (look for star patterns)
             rating = 0
+            star_patterns = [
+                r'(\d+)\s*star',
+                r'rating.*?(\d+)',
+                r'(\d+)\s*/\s*5',
+                r'★{1,5}',  # Count star symbols
+            ]
             
-            # Look for star SVG elements
-            star_elements = review_elem.find_all('svg', title=re.compile(r'star', re.I))
-            if star_elements:
-                # Count filled/active stars or look for rating number
-                rating_text = ""
-                # Look for number near stars
-                star_parent = star_elements[0].parent
-                if star_parent:
-                    rating_text = star_parent.get_text()
-                    rating_match = re.search(r'(\d+(?:\.\d+)?)', rating_text)
-                    if rating_match:
-                        rating = float(rating_match.group(1))
-                        if rating > 5:  # Ensure it's in 1-5 scale
-                            rating = 5
+            for pattern in star_patterns:
+                match = re.search(pattern, text, re.I)
+                if match:
+                    if pattern == r'★{1,5}':
+                        rating = len(match.group(0))
+                    else:
+                        rating = int(match.group(1))
+                    break
             
-            # Fallback: look for rating in any text
-            if rating == 0:
-                all_text = review_elem.get_text()
-                rating_patterns = [r'(\d)\s*[/\s]*5', r'(\d+(?:\.\d+)?)\s*star', r'Rating[:\s]*(\d+(?:\.\d+)?)']
-                for pattern in rating_patterns:
-                    match = re.search(pattern, all_text, re.I)
-                    if match:
-                        rating = float(match.group(1))
-                        break
-            
-            # Extract review title
+            # Extract title (often in quotes or headers)
             title = ""
-            title_methods = [
-                # Look for quoted text (often review titles)
-                lambda: self._find_quoted_text(review_elem),
-                # Look for text in title-like elements
-                lambda: self._get_text_by_selectors_element(review_elem, ['h1', 'h2', 'h3', 'h4', '[class*="tm4hnq"]'], ""),
+            title_patterns = [
+                r'"([^"]+)"',
+                r'\'([^\']+)\'',
+                r'Review:\s*(.+?)(?:\n|\.|$)',
             ]
             
-            for method in title_methods:
-                try:
-                    result = method()
-                    if result and len(result) > 3:
-                        title = result.strip('"').strip()
+            for pattern in title_patterns:
+                match = re.search(pattern, text)
+                if match:
+                    title = match.group(1).strip()
+                    if len(title) > 5 and len(title) < 100:  # Reasonable title length
                         break
-                except Exception:
-                    continue
             
-            # Extract review content
+            # Extract content (main review text)
             content = ""
+            lines = text.split('\n')
+            content_lines = []
             
-            # Look for substantial text content
-            content_methods = [
-                # Look for paragraphs
-                lambda: self._get_text_by_selectors_element(review_elem, ['p'], ""),
-                # Look for divs with substantial text
-                lambda: self._find_substantial_text(review_elem),
-                # Look for known content classes
-                lambda: self._get_text_by_selectors_element(review_elem, ['[class*="1n0nrdk"]'], ""),
-            ]
+            for line in lines:
+                line = line.strip()
+                # Skip metadata lines
+                if (len(line) > 20 and 
+                    not any(skip in line.lower() for skip in [
+                        'verified buyer', 'helpful', 'star', 'rating', 'avatar',
+                        'read more', 'show more', 'report', 'share'
+                    ])):
+                    content_lines.append(line)
             
-            for method in content_methods:
-                try:
-                    result = method()
-                    if result and len(result) > 10:  # Substantial content
-                        content = result
-                        # Clean up "Read More" text
-                        content = re.sub(r'\.\.\..*Read More.*$', '...', content, flags=re.I)
-                        break
-                except Exception:
-                    continue
+            content = ' '.join(content_lines[:3])  # Take first 3 content lines
+            
+            # Clean content
+            content = re.sub(r'\s+', ' ', content).strip()
             
             # Extract date
             date = ""
             date_patterns = [
                 r'(\d{1,2}/\d{1,2}/\d{4})',
+                r'(\d{1,2}/\d{1,2}/\d{2})',
                 r'(\d{1,2}-\d{1,2}-\d{4})',
                 r'(\d{4}-\d{1,2}-\d{1,2})',
-                r'(\d{1,2}\s+\w+\s+\d{4})',
             ]
             
-            all_text = review_elem.get_text()
             for pattern in date_patterns:
-                match = re.search(pattern, all_text)
+                match = re.search(pattern, text)
                 if match:
                     date = match.group(1)
                     break
@@ -2332,409 +1367,53 @@ class NykaaScraper:
             helpful_count = 0
             helpful_patterns = [
                 r'(\d+)\s*people found this helpful',
-                r'Helpful\s*(\d+)',
-                r'(\d+)\s*found.*helpful',
+                r'(\d+)\s*found.*?helpful',
+                r'helpful\s*[:\-]?\s*(\d+)',
             ]
             
             for pattern in helpful_patterns:
-                match = re.search(pattern, all_text, re.I)
+                match = re.search(pattern, text, re.I)
                 if match:
                     helpful_count = int(match.group(1))
                     break
             
-            # Extract review images
-            images = []
-            img_elements = review_elem.find_all('img')
-            for img in img_elements:
-                src = img.get('src')
-                if src and any(keyword in src.lower() for keyword in ['review', 'prod-review']):
-                    if src.startswith('//'):
-                        src = 'https:' + src
-                    elif src.startswith('/'):
-                        src = urljoin(self.base_url, src)
-                    images.append(src)
-            
-            # Only create review if we have minimum required information
-            if username and (content or title) and rating > 0:
-                user_info = UserInfo(
-                    username=username,
-                    user_id=None,
-                    verified_purchase=verified_purchase,
-                    review_count=None,
-                    location=None,
-                    join_date=None
-                )
-                
+            # Only create review if we have minimum required info
+            if rating > 0 and (content or title) and username != "Anonymous":
                 return Review(
                     review_id=None,
-                    user_info=user_info,
-                    rating=int(rating),
+                    user_info=UserInfo(username, None, True, None, None, None),
+                    rating=rating,
                     title=title,
                     content=content,
                     date=date,
                     helpful_count=helpful_count,
-                    verified_purchase=verified_purchase,
-                    images=images,
+                    verified_purchase=True,
+                    images=[],
                     pros=[],
                     cons=[]
                 )
-            
         except Exception as e:
-            logger.warning(f"Error parsing review using semantic selectors: {e}")
+            logger.debug(f"Error parsing review: {e}")
         
         return None
-
-    def _find_text_before_pattern(self, element, pattern: str, max_distance: int = 100) -> str:
-        """Find text that appears before a specific pattern"""
-        try:
-            text = element.get_text()
-            match = re.search(pattern, text, re.I)
-            if match:
-                before_text = text[:match.start()]
-                # Look for the last substantial word before the pattern
-                words = before_text.strip().split()
-                if words:
-                    # Return the last 1-2 words that look like a name
-                    potential_name = ' '.join(words[-2:]) if len(words) >= 2 else words[-1]
-                    if len(potential_name) > 2 and len(potential_name) < 50:
-                        return potential_name
-        except Exception:
-            pass
-        return ""
-
-    def _find_name_in_element(self, element, tags: List[str]) -> str:
-        """Find text in specific tags that looks like a name"""
-        try:
-            for tag in tags:
-                tag_elements = element.find_all(tag)
-                for tag_elem in tag_elements:
-                    text = tag_elem.get_text(strip=True)
-                    # Check if this looks like a name (not too long, not common UI text)
-                    if (text and 2 < len(text) < 50 and 
-                        not any(word in text.lower() for word in ['verified', 'buyers', 'helpful', 'star', 'rating', 'review'])):
-                        return text
-        except Exception:
-            pass
-        return ""
-
-    def _find_quoted_text(self, element) -> str:
-        """Find text enclosed in quotes"""
-        try:
-            text = element.get_text()
-            # Look for text in quotes
-            quote_patterns = [r'"([^"]+)"', r'"([^"]+)"', r"'([^']+)'"]
-            for pattern in quote_patterns:
-                matches = re.findall(pattern, text)
-                for match in matches:
-                    if 5 < len(match) < 200:  # Reasonable title length
-                        return match
-        except Exception:
-            pass
-        return ""
-
-    def _find_substantial_text(self, element) -> str:
-        """Find the most substantial text content in an element"""
-        try:
-            # Get all text nodes and find the longest substantial one
-            texts = []
-            for child in element.descendants:
-                if hasattr(child, 'string') and child.string and len(child.string.strip()) > 20:
-                    text = child.string.strip()
-                    # Skip if it's likely UI text
-                    if not any(word in text.lower() for word in ['verified', 'helpful', 'star', 'rating', 'buyers']):
-                        texts.append(text)
-            
-            # Return the longest text
-            if texts:
-                return max(texts, key=len)
-        except Exception:
-            pass
-        return ""
-
-    def _extract_reviews_from_current_page_driver(self, driver):
-        """Fallback method to extract reviews from current product page"""
-        reviews = []
-        
-        try:
-            # Get the current page source for review extraction
-            soup = BeautifulSoup(driver.page_source, 'html.parser')
-            
-            # Look for reviews in the JSON data first
-            script_tags = soup.find_all('script')
-            for script in script_tags:
-                if script.string and 'latestReviews' in script.string:
-                    try:
-                        # Extract reviews from the JSON data
-                        reviews_data = self._extract_reviews_from_json(script.string)
-                        if reviews_data:
-                            reviews.extend(reviews_data)
-                            logger.info(f"Extracted {len(reviews_data)} reviews from JSON data")
-                            break
-                    except Exception as e:
-                        logger.warning(f"Error extracting reviews from JSON: {e}")
-                        continue
-            
-            # If no reviews found in JSON, try HTML extraction
-            if not reviews:
-                logger.info("No reviews found in JSON, trying HTML extraction")
-                reviews = self._extract_reviews_from_html(soup)
-            
-        except Exception as e:
-            logger.error(f"Error extracting reviews from current page: {e}")
-        
-        logger.info(f"Total reviews extracted from current page: {len(reviews)}")
-        return reviews[:50]  # Limit to 50 reviews per product
-
-    def _extract_reviews_from_json(self, script_content: str) -> List[Review]:
-        """Extract reviews from JSON data in script tags"""
-        reviews = []
-        
-        try:
-            # Method 1: Look for latestReviews directly
-            latest_reviews_pattern = r'"latestReviews"\s*:\s*(\[(?:[^[\]]+|\[[^\]]*\])*\])'
-            latest_reviews_match = re.search(latest_reviews_pattern, script_content, re.DOTALL)
-            
-            if latest_reviews_match:
-                try:
-                    reviews_json = latest_reviews_match.group(1)
-                    reviews_data = json.loads(reviews_json)
-                    
-                    if isinstance(reviews_data, list):
-                        for review_data in reviews_data:
-                            if isinstance(review_data, dict):
-                                review = self._parse_review_from_json(review_data)
-                                if review:
-                                    reviews.append(review)
-                except json.JSONDecodeError as e:
-                    logger.warning(f"Error parsing latestReviews JSON: {e}")
-            
-            # Method 2: Extract from full preloaded state if method 1 failed
-            if not reviews:
-                try:
-                    preloaded_data = self._extract_json_data_safely(script_content, 'window.__PRELOADED_STATE__ = ')
-                    if preloaded_data:
-                        product_details = preloaded_data.get('productPage', {}).get('productDetails', {})
-                        if product_details and 'latestReviews' in product_details:
-                            latest_reviews = product_details['latestReviews']
-                            if isinstance(latest_reviews, list):
-                                for review_data in latest_reviews:
-                                    review = self._parse_review_from_json(review_data)
-                                    if review:
-                                        reviews.append(review)
-                except Exception as e:
-                    logger.warning(f"Error extracting reviews from preloaded state: {e}")
-        
-        except Exception as e:
-            logger.warning(f"Error parsing reviews from JSON: {e}")
-        
-        return reviews
-
-    def _parse_review_from_json(self, review_data: dict) -> Optional[Review]:
-        """Parse individual review from JSON data"""
-        try:
-            # Extract user information
-            user_name = review_data.get('name', 'Anonymous')
-            
-            # Extract rating
-            rating = int(review_data.get('rating', 0))
-            
-            # Extract review title and content
-            title = review_data.get('title', '')
-            content = review_data.get('description', '')
-            
-            # Extract date
-            date = review_data.get('createdOn', review_data.get('createdOnText', ''))
-            
-            # Extract helpful count
-            helpful_count = int(review_data.get('likeCount', 0))
-            
-            # Check if verified purchase
-            verified_purchase = review_data.get('isBuyer', False)
-            
-            # Extract review images
-            images = []
-            review_images = review_data.get('images', [])
-            if isinstance(review_images, list):
-                for img_url in review_images:
-                    if isinstance(img_url, str) and img_url.strip():
-                        images.append(img_url)
-            
-            # Create user info
-            user_info = UserInfo(
-                username=user_name,
-                user_id=None,
-                verified_purchase=verified_purchase,
-                review_count=None,
-                location=None,
-                join_date=None
-            )
-            
-            return Review(
-                review_id=str(review_data.get('id', '')),
-                user_info=user_info,
-                rating=rating,
-                title=title,
-                content=content,
-                date=date,
-                helpful_count=helpful_count,
-                verified_purchase=verified_purchase,
-                images=images,
-                pros=[],
-                cons=[]
-            )
-            
-        except Exception as e:
-            logger.warning(f"Error parsing review from JSON: {e}")
-            return None
-
-    def _extract_reviews_from_html(self, soup: BeautifulSoup) -> List[Review]:
-        """Extract reviews from HTML when JSON extraction fails"""
-        reviews = []
-        
-        try:
-            review_selectors = [
-                '.review-item',
-                '.review-card',
-                '[data-testid="review"]',
-                '.user-review',
-                '.consumer-review',
-                'div[class*="review"]'
-            ]
-            
-            for selector in review_selectors:
-                review_elements = soup.select(selector)
-                if review_elements:
-                    logger.info(f"Found {len(review_elements)} review elements with selector: {selector}")
-                    for review_elem in review_elements[:20]:  # Limit to 20 reviews per product
-                        review = self._parse_review(review_elem)
-                        if review:
-                            reviews.append(review)
-                    break
-            
-        except Exception as e:
-            logger.error(f"Error extracting reviews from HTML: {e}")
-        
-        return reviews
     
-    def _load_more_reviews(self):
-        """Try to load more reviews by clicking load more buttons"""
-        try:
-            for _ in range(3):  # Try to load more reviews 3 times
-                load_more_selectors = [
-                    "[aria-label='Load more reviews']",
-                    ".load-more-reviews",
-                    ".show-more-reviews"
-                ]
-                
-                button_found = False
-                for selector in load_more_selectors:
-                    try:
-                        button = self.driver.find_element(By.CSS_SELECTOR, selector)
-                        if button.is_displayed() and button.is_enabled():
-                            self.driver.execute_script("arguments[0].click();", button)
-                            self.random_delay()
-                            button_found = True
-                            break
-                    except NoSuchElementException:
-                        continue
-                
-                if not button_found:
-                    break
-                    
-        except Exception as e:
-            logger.warning(f"Error loading more reviews: {e}")
+    def _extract_product_id_from_url(self, url: str) -> str:
+        """Extract product ID from URL"""
+        match = re.search(r'/p/(\d+)', url)
+        return match.group(1) if match else "unknown"
     
-    def _parse_review(self, review_elem) -> Optional[Review]:
-        """Parse individual review element"""
+    def _extract_product_slug(self, url: str) -> Optional[str]:
+        """Extract product slug from URL"""
         try:
-            # Extract user information
-            username = self._get_text_by_selectors(
-                review_elem, 
-                ['.username', '.reviewer-name', '[data-testid="username"]'], 
-                "Anonymous"
-            )
-            
-            # Extract rating
-            rating_elem = review_elem.select_one('.rating, .stars, [data-testid="rating"]')
-            rating = 0
-            if rating_elem:
-                rating_text = rating_elem.get_text() or rating_elem.get('title', '')
-                rating = self._extract_rating(rating_text)
-            
-            # Extract review title
-            title = self._get_text_by_selectors(
-                review_elem,
-                ['.review-title', '.title', '[data-testid="review-title"]'],
-                ""
-            )
-            
-            # Extract review content
-            content = self._get_text_by_selectors(
-                review_elem,
-                ['.review-content', '.review-text', '[data-testid="review-content"]'],
-                ""
-            )
-            
-            # Extract date
-            date = self._get_text_by_selectors(
-                review_elem,
-                ['.review-date', '.date', '[data-testid="review-date"]'],
-                ""
-            )
-            
-            # Extract helpful count
-            helpful_text = self._get_text_by_selectors(
-                review_elem,
-                ['.helpful-count', '.likes', '[data-testid="helpful-count"]'],
-                "0"
-            )
-            helpful_count = self._extract_number(helpful_text)
-            
-            # Check if verified purchase
-            verified_elem = review_elem.select_one('.verified-purchase, .verified')
-            verified_purchase = verified_elem is not None
-            
-            # Extract review images
-            img_elements = review_elem.select('.review-images img, .user-images img')
-            images = []
-            for img in img_elements:
-                src = img.get('src') or img.get('data-src')
-                if src:
-                    if src.startswith('//'):
-                        src = 'https:' + src
-                    elif src.startswith('/'):
-                        src = urljoin(self.base_url, src)
-                    images.append(src)
-            
-            user_info = UserInfo(
-                username=username,
-                user_id=None,
-                verified_purchase=verified_purchase,
-                review_count=None,
-                location=None,
-                join_date=None
-            )
-            
-            return Review(
-                review_id=None,
-                user_info=user_info,
-                rating=rating,
-                title=title,
-                content=content,
-                date=date,
-                helpful_count=helpful_count,
-                verified_purchase=verified_purchase,
-                images=images,
-                pros=[],
-                cons=[]
-            )
-            
-        except Exception as e:
-            logger.warning(f"Error parsing review: {e}")
-            return None
+            path = url.replace(self.base_url, '').strip('/')
+            if '/p/' in path:
+                return path.split('/p/')[0]
+        except Exception:
+            pass
+        return None
     
     def _get_text_by_selectors(self, soup, selectors: List[str], default: str = "") -> str:
-        """Get text content using multiple CSS selectors"""
+        """Get text using CSS selectors"""
         for selector in selectors:
             element = soup.select_one(selector)
             if element:
@@ -2743,252 +1422,198 @@ class NykaaScraper:
                     return text
         return default
     
-    def _get_text_by_selectors_element(self, element, selectors: List[str], default: str = "") -> str:
-        """Get text content from element using multiple CSS selectors"""
-        for selector in selectors:
-            sub_element = element.select_one(selector)
-            if sub_element:
-                text = sub_element.get_text(strip=True)
-                if text:
-                    return text
-        return default
-    
-    def _extract_price(self, price_text: str) -> float:
-        """Extract numeric price from text"""
-        if not price_text:
-            return 0.0
+    def scrape_keywords(self, keywords: List[str], max_products_per_keyword: int = 50) -> Dict[str, Any]:
+        """Main method to scrape multiple keywords with separate file saving"""
+        logger.info(f"Starting optimized scrape for {len(keywords)} keywords with {self.max_threads} threads")
+        logger.info(f"Each keyword will be saved to a separate file in '{self.output_dir}' folder")
         
-        # Remove currency symbols and extract numbers
-        price_match = re.search(r'[\d,]+\.?\d*', price_text.replace(',', ''))
-        if price_match:
-            return float(price_match.group())
-        return 0.0
-    
-    def _extract_rating(self, rating_text: str) -> float:
-        """Extract numeric rating from text"""
-        if not rating_text:
-            return 0.0
+        # Summary data for final report
+        summary_data = {
+            'scrape_metadata': {
+                'scrape_date': datetime.now().isoformat(),
+                'total_keywords': len(keywords),
+                'keywords_searched': keywords,
+                'scraper_version': '2.0_optimized_fixed'
+            },
+            'keyword_summaries': []
+        }
         
-        rating_match = re.search(r'(\d+\.?\d*)', rating_text)
-        if rating_match:
-            return float(rating_match.group(1))
-        return 0.0
-    
-    def _extract_number(self, text: str) -> int:
-        """Extract number from text"""
-        if not text:
-            return 0
+        # Optimize threads
+        effective_threads = 1 if len(keywords) == 1 else min(self.max_threads, len(keywords))
         
-        number_match = re.search(r'(\d+)', text.replace(',', ''))
-        if number_match:
-            return int(number_match.group(1))
-        return 0
-    
-    def _extract_product_id(self, product_url: str) -> str:
-        """Extract product ID from URL"""
-        # Try to extract ID from URL patterns
-        patterns = [
-            r'/p/([^/]+)',
-            r'product/([^/]+)',
-            r'pid=([^&]+)',
-            r'/(\d+)/'
-        ]
-        
-        for pattern in patterns:
-            match = re.search(pattern, product_url)
-            if match:
-                return match.group(1)
-        
-        # Fallback to URL hash
-        return str(hash(product_url))
-    
-    def _scrape_reviews_with_infinite_scroll(self) -> List[Review]:
-        """Scrape reviews with infinite scrolling to get all available reviews"""
-        if not self.driver:
-            self.setup_driver()
-        return self._scrape_reviews_with_infinite_scroll_driver(self.driver)
-
-    def _extract_reviews_from_current_reviews_page(self) -> List[Review]:
-        """Extract reviews from the current reviews page HTML using reliable selectors"""
-        if not self.driver:
-            self.setup_driver()
-        return self._extract_reviews_from_current_reviews_page_driver(self.driver)
-
-    def _extract_reviews_from_current_page(self) -> List[Review]:
-        """Fallback method to extract reviews from current product page"""
-        if not self.driver:
-            self.setup_driver()
-        return self._extract_reviews_from_current_page_driver(self.driver)
-    
-    def scrape_keywords(self, keywords: List[str], max_products_per_keyword: int = 20) -> Dict[str, Any]:
-        """
-        Main method to scrape products for multiple keywords using multi-threading
-        
-        Args:
-            keywords: List of search keywords
-            max_products_per_keyword: Maximum products to scrape per keyword
+        with ThreadPoolExecutor(max_workers=effective_threads, thread_name_prefix="NykaaScraper") as executor:
+            future_to_keyword = {
+                executor.submit(self._scrape_keyword_with_checkpoint, keyword, max_products_per_keyword): keyword
+                for keyword in keywords
+            }
             
-        Returns:
-            Dictionary containing all scraped data
-        """
-        logger.info(f"Starting multi-threaded scrape for keywords: {keywords}")
-        logger.info(f"Using {self.max_threads} threads for parallel processing")
-        
-        self.scraped_data['scrape_metadata']['keywords_searched'] = keywords
-        
-        all_scraped_products = []
-        
-        # Use ThreadPoolExecutor for parallel keyword processing
-        with ThreadPoolExecutor(max_workers=self.max_threads, thread_name_prefix="NykaaScraper") as executor:
-            # Submit all keyword scraping tasks
-            future_to_keyword = {}
-            for keyword in keywords:
-                future = executor.submit(self._scrape_keyword_thread, keyword, max_products_per_keyword)
-                future_to_keyword[future] = keyword
-            
-            # Collect results as they complete
             for future in tqdm(as_completed(future_to_keyword), total=len(keywords), desc="Scraping keywords"):
                 keyword = future_to_keyword[future]
                 try:
-                    scraped_products = future.result()
-                    logger.info(f"Completed keyword '{keyword}': {len(scraped_products)} products")
+                    keyword_data = future.result()
+                    logger.info(f"Completed '{keyword}': {keyword_data['scrape_metadata']['total_products']} products")
                     
-                    # Thread-safe data aggregation
-                    with self._data_lock:
-                        all_scraped_products.extend(scraped_products)
-                        # Count total reviews
-                        for product in scraped_products:
-                            self.scraped_data['scrape_metadata']['total_reviews'] += len(product.get('reviews', []))
-                            
+                    # Add to summary
+                    summary_data['keyword_summaries'].append({
+                        'keyword': keyword,
+                        'total_products': keyword_data['scrape_metadata']['total_products'],
+                        'total_reviews': keyword_data['scrape_metadata']['total_reviews']
+                    })
+                
                 except Exception as e:
                     logger.error(f"Error processing keyword '{keyword}': {e}")
-                    continue
+                    summary_data['keyword_summaries'].append({
+                        'keyword': keyword,
+                        'total_products': 0,
+                        'total_reviews': 0,
+                        'error': str(e)
+                    })
         
-        # Update scraped data
-        self.scraped_data['products'] = all_scraped_products
-        self.scraped_data['scrape_metadata']['total_products'] = len(all_scraped_products)
+        # Save summary report
+        self._save_summary_report(summary_data)
         
-        logger.info(f"Multi-threaded scraping completed. Total products: {len(all_scraped_products)}")
-        return self.scraped_data
+        total_products = sum(s['total_products'] for s in summary_data['keyword_summaries'])
+        total_reviews = sum(s['total_reviews'] for s in summary_data['keyword_summaries'])
+        
+        logger.info(f"Scraping completed: {total_products} total products, {total_reviews} total reviews")
+        logger.info(f"Separate files saved in '{self.output_dir}' folder")
+        
+        return summary_data
     
-    def save_data(self, filename: str = None):
-        """Save scraped data to JSON file"""
-        if not filename:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"nykaa_scraped_data_{timestamp}.json"
+    def _save_summary_report(self, summary_data: Dict[str, Any]):
+        """Save a summary report of all keywords"""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        summary_filename = os.path.join(self.output_dir, f"scraping_summary_{timestamp}.json")
         
         try:
-            with open(filename, 'w', encoding='utf-8') as f:
-                json.dump(self.scraped_data, f, indent=2, ensure_ascii=False)
-            
-            logger.info(f"Data saved to {filename}")
-            
-            # Also save a summary report
-            summary_filename = filename.replace('.json', '_summary.txt')
-            self._save_summary_report(summary_filename)
-            
-        except Exception as e:
-            logger.error(f"Error saving data: {e}")
-    
-    def _save_summary_report(self, filename: str):
-        """Save a summary report of the scraped data"""
-        try:
-            total_products = self.scraped_data['scrape_metadata']['total_products']
-            total_reviews = self.scraped_data['scrape_metadata']['total_reviews']
-            keywords = self.scraped_data['scrape_metadata']['keywords_searched']
-            
-            with open(filename, 'w', encoding='utf-8') as f:
-                f.write("NYKAA SCRAPER SUMMARY REPORT\n")
-                f.write("=" * 40 + "\n\n")
-                f.write(f"Scrape Date: {self.scraped_data['scrape_metadata']['scrape_date']}\n")
-                f.write(f"Keywords Searched: {', '.join(keywords)}\n")
-                f.write(f"Total Products Scraped: {total_products}\n")
-                f.write(f"Total Reviews Collected: {total_reviews}\n\n")
-                
-                if self.scraped_data['products']:
-                    f.write("PRODUCT BREAKDOWN:\n")
-                    f.write("-" * 20 + "\n")
-                    
-                    brands = {}
-                    categories = {}
-                    
-                    for product in self.scraped_data['products']:
-                        brand = product.get('brand', 'Unknown')
-                        category = product.get('category', 'Unknown')
-                        
-                        brands[brand] = brands.get(brand, 0) + 1
-                        categories[category] = categories.get(category, 0) + 1
-                    
-                    f.write("\nTop Brands:\n")
-                    for brand, count in sorted(brands.items(), key=lambda x: x[1], reverse=True)[:10]:
-                        f.write(f"  {brand}: {count} products\n")
-                    
-                    f.write("\nCategories:\n")
-                    for category, count in sorted(categories.items(), key=lambda x: x[1], reverse=True):
-                        f.write(f"  {category}: {count} products\n")
-            
-            logger.info(f"Summary report saved to {filename}")
-            
+            with open(summary_filename, 'w', encoding='utf-8') as f:
+                json.dump(summary_data, f, indent=2, ensure_ascii=False)
+            logger.info(f"Summary report saved: {summary_filename}")
         except Exception as e:
             logger.error(f"Error saving summary report: {e}")
     
     def cleanup(self):
-        """Clean up resources including thread-local drivers"""
+        """Clean up resources"""
         try:
-            # Clean up main driver
             if self.driver:
                 self.driver.quit()
                 self.driver = None
             
-            # Clean up thread-local drivers
             if hasattr(self._thread_local, 'driver') and self._thread_local.driver:
                 self._thread_local.driver.quit()
                 self._thread_local.driver = None
             
-            # Close session
             if self.session:
                 self.session.close()
-                
+
             logger.info("Cleanup completed")
         except Exception as e:
             logger.error(f"Error during cleanup: {e}")
 
-
 def main():
-    """Main function to run the scraper"""
+    """Main function with comprehensive configuration for large-scale scraping"""
     
-    # Configuration
+    # ========================
+    # CONFIGURATION VARIABLES
+    # ========================
+    
+    # Keywords to search for
     KEYWORDS = [
         "eyeshadow",
         "eyeliner"
     ]
     
-    MAX_PRODUCTS_PER_KEYWORD = 40  # Adjust based on needs
-    MAX_THREADS = 2  # Number of threads for parallel processing
-    HEADLESS = True  # Set to False to see browser in action
+    # === SCRAPING SCALE CONFIGURATION ===
+
+    # use less than this as there is chance of getting blocked by Nykaa
+    MAX_PRODUCTS_PER_KEYWORD = 500
+    MAX_REVIEWS_PER_PRODUCT = 300
     
-    # Initialize scraper with thread configuration
-    scraper = NykaaScraper(headless=HEADLESS, delay_range=(2, 4), max_threads=MAX_THREADS)
+    # === PERFORMANCE CONFIGURATION ===
+    MAX_THREADS = 2  # Increase for faster processing (but watch rate limits)
+    
+    # === BROWSER CONFIGURATION ===
+    HEADLESS = True
+    DELAY_RANGE = (2, 5)  # Longer delays for large-scale to avoid detection
+    
+    # === REVIEW SCRAPING CONFIGURATION ===
+    MAX_SCROLL_ATTEMPTS = 200  # High for thorough extraction
+    MAX_CONSECUTIVE_NO_NEW = 15  # More patience for large-scale
+    REVIEW_LOAD_WAIT_TIME = 10  # Longer wait for heavy pages
+    
+    # === CHECKPOINT CONFIGURATION ===
+    ENABLE_CHECKPOINTS = True  # Essential for large-scale scraping
+    SAVE_FREQUENCY = 25  # Save progress every 25 products
+    
+    # === OUTPUT CONFIGURATION ===
+    OUTPUT_DIR = "scrapped-data"  # Directory for separate JSON files
+    
+    # ========================
+    # THREADING OPTIMIZATION
+    # ========================
+    
+    effective_threads = 1 if len(KEYWORDS) == 1 else min(MAX_THREADS, len(KEYWORDS))
+    
+    logger.info("=" * 60)
+    logger.info("NYKAA SCRAPER - FIXED VERSION WITH LOAD MORE")
+    logger.info("=" * 60)
+    logger.info(f"Keywords: {len(KEYWORDS)} ({KEYWORDS})")
+    logger.info(f"Threads: {effective_threads}")
+    logger.info(f"Products per keyword: {MAX_PRODUCTS_PER_KEYWORD}")
+    logger.info(f"Reviews per product: {MAX_REVIEWS_PER_PRODUCT}")
+    logger.info(f"Checkpoints enabled: {ENABLE_CHECKPOINTS}")
+    logger.info(f"Output directory: {OUTPUT_DIR}")
+    logger.info("=" * 60)
+    
+    # Initialize optimized scraper
+    scraper = NykaaScraper(
+        headless=HEADLESS,
+        delay_range=DELAY_RANGE,
+        max_threads=effective_threads,
+        max_reviews_per_product=MAX_REVIEWS_PER_PRODUCT,
+        max_scroll_attempts=MAX_SCROLL_ATTEMPTS,
+        max_consecutive_no_new=MAX_CONSECUTIVE_NO_NEW,
+        review_load_wait_time=REVIEW_LOAD_WAIT_TIME,
+        enable_checkpoints=ENABLE_CHECKPOINTS,
+        save_frequency=SAVE_FREQUENCY,
+        output_dir=OUTPUT_DIR
+    )
     
     try:
+        start_time = datetime.now()
+        logger.info(f"Starting scrape at {start_time}")
+        
         # Run scraping
-        logger.info("Starting Nykaa scraper...")
-        data = scraper.scrape_keywords(KEYWORDS, MAX_PRODUCTS_PER_KEYWORD)
+        summary = scraper.scrape_keywords(KEYWORDS, MAX_PRODUCTS_PER_KEYWORD)
         
-        # Save data
-        scraper.save_data()
+        # Print summary
+        end_time = datetime.now()
+        duration = end_time - start_time
         
-        logger.info("Scraping completed successfully!")
+        total_products = sum(s['total_products'] for s in summary['keyword_summaries'])
+        total_reviews = sum(s['total_reviews'] for s in summary['keyword_summaries'])
+        
+        logger.info("=" * 60)
+        logger.info("SCRAPING COMPLETED SUCCESSFULLY!")
+        logger.info("=" * 60)
+        logger.info(f"Duration: {duration}")
+        logger.info(f"Total products: {total_products}")
+        logger.info(f"Total reviews: {total_reviews}")
+        logger.info(f"Average reviews per product: {total_reviews / max(1, total_products):.1f}")
+        logger.info(f"Files saved in: {OUTPUT_DIR}/")
+        logger.info("=" * 60)
+        
+        # Print per-keyword summary
+        logger.info("PER-KEYWORD SUMMARY:")
+        for summary_item in summary['keyword_summaries']:
+            logger.info(f"  {summary_item['keyword']}: {summary_item['total_products']} products, {summary_item['total_reviews']} reviews")
         
     except KeyboardInterrupt:
-        logger.info("Scraping interrupted by user")
+        logger.info("Scraping interrupted by user - progress saved in checkpoints")
     except Exception as e:
         logger.error(f"Scraping failed: {e}")
     finally:
-        # Cleanup
         scraper.cleanup()
-        logger.info("Cleanup completed")
-
 
 if __name__ == "__main__":
     main() 

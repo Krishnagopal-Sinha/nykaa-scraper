@@ -7,3 +7,9 @@ __pycache__
 *.pywz
 .venv
 test_imports.py
+scraped-data
+drivers
+*.log
+*.html
+*.json
+*.csv
