@@ -248,6 +248,8 @@ class NykaaScraper:
         # Try webdriver-manager as second option
         try:
             driver_path = ChromeDriverManager().install()
+            logger.info(f"webdriver-manager returned path: {driver_path}")
+            
             # Verify the path is actually executable
             if os.path.isfile(driver_path) and os.access(driver_path, os.X_OK):
                 # Check if it's not the THIRD_PARTY_NOTICES file
@@ -257,21 +259,71 @@ class NykaaScraper:
             
             # If webdriver-manager returned wrong path, search for the actual executable
             logger.info("webdriver-manager returned wrong path, searching for actual chromedriver...")
-            search_dir = os.path.dirname(driver_path)
             
-            for root, dirs, files in os.walk(search_dir):
-                for file in files:
-                    if file == 'chromedriver':
-                        potential_path = os.path.join(root, file)
-                        if os.path.isfile(potential_path) and os.access(potential_path, os.X_OK):
-                            # Test if it's actually a binary executable
-                            try:
-                                test_result = subprocess.run([potential_path, '--version'], capture_output=True, text=True, timeout=5)
-                                if test_result.returncode == 0:
-                                    logger.info(f"Found working ChromeDriver: {potential_path}")
-                                    return potential_path
-                            except Exception:
-                                continue
+            # Get the base cache directory from the returned path
+            if '.wdm' in driver_path:
+                # Extract the version directory
+                # Path looks like: /Users/user/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+                path_parts = driver_path.split('/')
+                version_dir = None
+                for i, part in enumerate(path_parts):
+                    if part.startswith('chromedriver-'):  # Find chromedriver-mac-arm64 directory
+                        version_dir = '/'.join(path_parts[:i+1])
+                        break
+                
+                if version_dir and os.path.exists(version_dir):
+                    logger.info(f"Searching in version directory: {version_dir}")
+                    
+                    # Look for chromedriver executable in this directory
+                    for file in os.listdir(version_dir):
+                        if file == 'chromedriver':
+                            potential_path = os.path.join(version_dir, file)
+                            if os.path.isfile(potential_path):
+                                # Make sure it has execute permissions
+                                os.chmod(potential_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                                
+                                if os.access(potential_path, os.X_OK):
+                                    # Test if it actually works
+                                    try:
+                                        test_result = subprocess.run([potential_path, '--version'], 
+                                                                   capture_output=True, text=True, timeout=5)
+                                        if test_result.returncode == 0:
+                                            logger.info(f"Found working ChromeDriver: {potential_path}")
+                                            return potential_path
+                                    except Exception as e:
+                                        logger.warning(f"Test failed for {potential_path}: {e}")
+                                        continue
+                
+                # Fallback: search the entire cache directory structure
+                cache_base = os.path.expanduser("~/.wdm")
+                if os.path.exists(cache_base):
+                    logger.info(f"Searching entire cache directory: {cache_base}")
+                    for root, dirs, files in os.walk(cache_base):
+                        for file in files:
+                            if file == 'chromedriver':
+                                potential_path = os.path.join(root, file)
+                                if os.path.isfile(potential_path):
+                                    # Skip THIRD_PARTY_NOTICES files
+                                    if 'THIRD_PARTY_NOTICES' in potential_path:
+                                        continue
+                                    
+                                    # Make sure it has execute permissions
+                                    try:
+                                        os.chmod(potential_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                                    except Exception:
+                                        pass
+                                    
+                                    if os.access(potential_path, os.X_OK):
+                                        # Test if it actually works
+                                        try:
+                                            test_result = subprocess.run([potential_path, '--version'], 
+                                                                       capture_output=True, text=True, timeout=5)
+                                            if test_result.returncode == 0:
+                                                logger.info(f"Found working ChromeDriver in cache: {potential_path}")
+                                                return potential_path
+                                        except Exception as e:
+                                            logger.debug(f"Test failed for {potential_path}: {e}")
+                                            continue
                                 
         except Exception as e:
             logger.warning(f"webdriver-manager failed: {e}")
