@@ -22,6 +22,9 @@ import random
 import re
 import logging
 import os
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from urllib.parse import urljoin, urlparse, parse_qs
@@ -136,20 +139,26 @@ class ProductInfo:
 class NykaaScraper:
     """Main scraper class for Nykaa.com"""
     
-    def __init__(self, headless: bool = True, delay_range: tuple = (1, 3)):
+    def __init__(self, headless: bool = True, delay_range: tuple = (1, 3), max_threads: int = 2):
         """
         Initialize the Nykaa scraper
         
         Args:
             headless: Whether to run browser in headless mode
             delay_range: Random delay range between requests (min, max) seconds
+            max_threads: Maximum number of threads for parallel processing
         """
         self.base_url = "https://www.nykaa.com"
         self.delay_range = delay_range
+        self.max_threads = max_threads
         self.ua = UserAgent()
         self.session = requests.Session()
         self.driver = None
         self.headless = headless
+        
+        # Thread safety
+        self._data_lock = Lock()
+        self._thread_local = threading.local()
         
         # Setup session headers
         self.session.headers.update({
@@ -171,8 +180,15 @@ class NykaaScraper:
             'products': []
         }
     
-    def setup_driver(self):
-        """Setup Selenium WebDriver with proper configuration"""
+    def _get_thread_driver(self):
+        """Get or create a driver instance for the current thread"""
+        if not hasattr(self._thread_local, 'driver') or self._thread_local.driver is None:
+            logger.info(f"Creating new driver for thread {threading.current_thread().name}")
+            self._thread_local.driver = self._create_driver_instance()
+        return self._thread_local.driver
+    
+    def _create_driver_instance(self):
+        """Create a new WebDriver instance"""
         try:
             chrome_options = Options()
             if self.headless:
@@ -187,34 +203,237 @@ class NykaaScraper:
             chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
             chrome_options.add_experimental_option('useAutomationExtension', False)
             
-            # Try multiple approaches to get a working ChromeDriver
-            service = None
-            driver_attempts = [
-                self._try_webdriver_manager,
-                self._try_system_chromedriver,
-                self._try_manual_chromedriver_install
-            ]
+            # Use a simpler, more reliable ChromeDriver setup
+            service = self._get_chromedriver_service()
             
-            for attempt in driver_attempts:
-                try:
-                    service = attempt()
-                    if service:
-                        break
-                except Exception as e:
-                    logger.warning(f"Driver setup attempt failed: {e}")
-                    continue
+            driver = webdriver.Chrome(service=service, options=chrome_options)
+            driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             
-            if not service:
-                raise Exception("All ChromeDriver setup methods failed")
-            
-            self.driver = webdriver.Chrome(service=service, options=chrome_options)
-            self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-            
-            logger.info("WebDriver setup completed successfully")
+            logger.info(f"WebDriver created for thread {threading.current_thread().name}")
+            return driver
             
         except Exception as e:
-            logger.error(f"Failed to setup WebDriver: {e}")
+            logger.error(f"Failed to create WebDriver for thread {threading.current_thread().name}: {e}")
             raise
+    
+    def _get_chromedriver_service(self):
+        """Get ChromeDriver service with simplified setup"""
+        # Check if we already have a working driver path stored
+        if not hasattr(self, '_chromedriver_path'):
+            self._chromedriver_path = self._setup_chromedriver()
+        
+        return Service(self._chromedriver_path)
+    
+    def _setup_chromedriver(self):
+        """Setup ChromeDriver once and reuse"""
+        import platform
+        import subprocess
+        import os
+        import requests
+        import zipfile
+        import stat
+        
+        logger.info("Setting up ChromeDriver...")
+        
+        # Try system ChromeDriver first
+        try:
+            result = subprocess.run(['which', 'chromedriver'], capture_output=True, text=True)
+            if result.returncode == 0:
+                driver_path = result.stdout.strip()
+                logger.info(f"Using system ChromeDriver: {driver_path}")
+                return driver_path
+        except Exception:
+            pass
+        
+        # Try webdriver-manager as second option
+        try:
+            driver_path = ChromeDriverManager().install()
+            # Verify the path is actually executable
+            if os.path.isfile(driver_path) and os.access(driver_path, os.X_OK):
+                # Check if it's not the THIRD_PARTY_NOTICES file
+                if not driver_path.endswith('THIRD_PARTY_NOTICES.chromedriver'):
+                    logger.info(f"Using webdriver-manager ChromeDriver: {driver_path}")
+                    return driver_path
+            
+            # If webdriver-manager returned wrong path, search for the actual executable
+            logger.info("webdriver-manager returned wrong path, searching for actual chromedriver...")
+            search_dir = os.path.dirname(driver_path)
+            
+            for root, dirs, files in os.walk(search_dir):
+                for file in files:
+                    if file == 'chromedriver':
+                        potential_path = os.path.join(root, file)
+                        if os.path.isfile(potential_path) and os.access(potential_path, os.X_OK):
+                            # Test if it's actually a binary executable
+                            try:
+                                test_result = subprocess.run([potential_path, '--version'], capture_output=True, text=True, timeout=5)
+                                if test_result.returncode == 0:
+                                    logger.info(f"Found working ChromeDriver: {potential_path}")
+                                    return potential_path
+                            except Exception:
+                                continue
+                                
+        except Exception as e:
+            logger.warning(f"webdriver-manager failed: {e}")
+        
+        # Download and setup ChromeDriver manually
+        logger.info("Downloading ChromeDriver manually...")
+        
+        # Determine platform
+        system = platform.system().lower()
+        machine = platform.machine().lower()
+        
+        if system == "darwin":
+            if "arm" in machine or "aarch64" in machine:
+                platform_name = "mac-arm64"
+            else:
+                platform_name = "mac-x64"
+        elif system == "linux":
+            if "arm" in machine or "aarch64" in machine:
+                platform_name = "linux-arm64"
+            else:
+                platform_name = "linux64"
+        else:  # Windows
+            platform_name = "win64"
+        
+        # Create drivers directory
+        drivers_dir = os.path.join(os.getcwd(), "drivers")
+        os.makedirs(drivers_dir, exist_ok=True)
+        
+        # Try to get Chrome version
+        chrome_version = self._get_chrome_version()
+        
+        # List of versions to try (latest stable versions)
+        versions_to_try = []
+        if chrome_version:
+            versions_to_try.append(chrome_version)
+        
+        # Add some recent stable versions as fallbacks
+        stable_versions = [
+            "131.0.6778.85",
+            "131.0.6778.69", 
+            "130.0.6723.116",
+            "130.0.6723.91",
+            "129.0.6668.100"
+        ]
+        versions_to_try.extend(stable_versions)
+        
+        # Try each version until one works
+        for version in versions_to_try:
+            try:
+                download_url = f"https://storage.googleapis.com/chrome-for-testing-public/{version}/{platform_name}/chromedriver-{platform_name}.zip"
+                
+                logger.info(f"Trying ChromeDriver version {version}...")
+                
+                # Download
+                response = requests.get(download_url, timeout=30)
+                if response.status_code != 200:
+                    continue
+                
+                # Save and extract
+                zip_path = os.path.join(drivers_dir, f"chromedriver_{version}.zip")
+                with open(zip_path, "wb") as f:
+                    f.write(response.content)
+                
+                # Extract
+                extract_dir = os.path.join(drivers_dir, f"chromedriver_{version}")
+                os.makedirs(extract_dir, exist_ok=True)
+                
+                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                    zip_ref.extractall(extract_dir)
+                
+                # Find chromedriver executable
+                driver_path = None
+                for root, dirs, files in os.walk(extract_dir):
+                    for file in files:
+                        if file == 'chromedriver':
+                            potential_path = os.path.join(root, file)
+                            if os.path.isfile(potential_path):
+                                driver_path = potential_path
+                                break
+                    if driver_path:
+                        break
+                
+                if driver_path and os.path.isfile(driver_path):
+                    # Make executable
+                    os.chmod(driver_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                    
+                    # Test if it works
+                    test_result = subprocess.run([driver_path, '--version'], capture_output=True, text=True, timeout=10)
+                    if test_result.returncode == 0:
+                        logger.info(f"Successfully downloaded and verified ChromeDriver {version}: {driver_path}")
+                        
+                        # Clean up zip file
+                        try:
+                            os.remove(zip_path)
+                        except:
+                            pass
+                        
+                        return driver_path
+                
+                # Clean up failed attempt
+                try:
+                    os.remove(zip_path)
+                    import shutil
+                    shutil.rmtree(extract_dir)
+                except:
+                    pass
+                    
+            except Exception as e:
+                logger.warning(f"Failed to download ChromeDriver version {version}: {e}")
+                continue
+        
+        raise Exception("Could not download or setup ChromeDriver")
+    
+    def _get_chrome_version(self):
+        """Get installed Chrome version"""
+        try:
+            import subprocess
+            
+            # Try different Chrome executable paths
+            chrome_paths = [
+                "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+                "google-chrome-stable",
+                "google-chrome",
+                "chromium-browser"
+            ]
+            
+            for chrome_path in chrome_paths:
+                try:
+                    result = subprocess.run([chrome_path, "--version"], capture_output=True, text=True, timeout=10)
+                    if result.returncode == 0:
+                        version_text = result.stdout.strip()
+                        # Extract version number
+                        import re
+                        version_match = re.search(r'(\d+\.\d+\.\d+\.\d+)', version_text)
+                        if version_match:
+                            version = version_match.group(1)
+                            logger.info(f"Detected Chrome version: {version}")
+                            return version
+                except Exception:
+                    continue
+            
+            logger.warning("Could not detect Chrome version")
+            return None
+            
+        except Exception as e:
+            logger.warning(f"Error detecting Chrome version: {e}")
+            return None
+    
+    def setup_driver(self):
+        """Setup Selenium WebDriver with proper configuration"""
+        try:
+            self.driver = self._create_driver_instance()
+            logger.info("Main WebDriver setup completed successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to setup main WebDriver: {e}")
+            raise
+    
+    def random_delay(self):
+        """Add random delay between requests to avoid rate limiting"""
+        delay = random.uniform(*self.delay_range)
+        time.sleep(delay)
     
     def _try_webdriver_manager(self):
         """Try to setup driver using webdriver-manager"""
@@ -464,16 +683,56 @@ class NykaaScraper:
             logger.error(f"Manual ChromeDriver installation failed: {e}")
             raise
     
-    def random_delay(self):
-        """Add random delay between requests to avoid rate limiting"""
-        delay = random.uniform(*self.delay_range)
-        time.sleep(delay)
-    
-    def search_products(self, keyword: str, max_products: int = 50) -> List[str]:
+    def _scrape_keyword_thread(self, keyword: str, max_products: int) -> List[Dict[str, Any]]:
         """
-        Search for products using keyword and return product URLs
+        Thread worker function to scrape products for a single keyword
         
         Args:
+            keyword: Search keyword
+            max_products: Maximum number of products to scrape for this keyword
+            
+        Returns:
+            List of scraped product data dictionaries
+        """
+        thread_name = threading.current_thread().name
+        logger.info(f"[{thread_name}] Starting to scrape keyword: '{keyword}'")
+        
+        try:
+            # Get thread-local driver
+            driver = self._get_thread_driver()
+            
+            # Search for products
+            product_urls = self._search_products_with_driver(driver, keyword, max_products)
+            logger.info(f"[{thread_name}] Found {len(product_urls)} URLs for keyword '{keyword}'")
+            
+            # Scrape each product
+            scraped_products = []
+            for i, url in enumerate(product_urls, 1):
+                try:
+                    logger.info(f"[{thread_name}] Scraping product {i}/{len(product_urls)} for '{keyword}': {url}")
+                    product_info = self._scrape_product_details_with_driver(driver, url)
+                    if product_info:
+                        scraped_products.append(asdict(product_info))
+                    
+                    self.random_delay()
+                    
+                except Exception as e:
+                    logger.error(f"[{thread_name}] Error scraping product {url}: {e}")
+                    continue
+            
+            logger.info(f"[{thread_name}] Completed scraping for keyword '{keyword}': {len(scraped_products)} products")
+            return scraped_products
+            
+        except Exception as e:
+            logger.error(f"[{thread_name}] Error scraping keyword '{keyword}': {e}")
+            return []
+    
+    def _search_products_with_driver(self, driver, keyword: str, max_products: int = 50) -> List[str]:
+        """
+        Search for products using keyword with specific driver instance
+        
+        Args:
+            driver: WebDriver instance to use
             keyword: Search keyword
             max_products: Maximum number of products to scrape
             
@@ -482,19 +741,16 @@ class NykaaScraper:
         """
         logger.info(f"Searching for products with keyword: '{keyword}'")
         
-        if not self.driver:
-            self.setup_driver()
-        
         product_urls = []
         
         try:
             # Navigate to search page
             search_url = f"{self.base_url}/search/result/?q={keyword.replace(' ', '%20')}"
-            self.driver.get(search_url)
+            driver.get(search_url)
             self.random_delay()
             
             # Handle any popups or overlays
-            self._handle_popups()
+            self._handle_popups_with_driver(driver)
             
             page_num = 1
             
@@ -514,7 +770,7 @@ class NykaaScraper:
                     element_found = False
                     for selector in selectors_to_wait:
                         try:
-                            WebDriverWait(self.driver, 5).until(
+                            WebDriverWait(driver, 5).until(
                                 EC.presence_of_element_located((By.CSS_SELECTOR, selector))
                             )
                             element_found = True
@@ -541,7 +797,7 @@ class NykaaScraper:
                 found_links = False
                 for selector in product_link_selectors:
                     try:
-                        product_cards = self.driver.find_elements(By.CSS_SELECTOR, selector)
+                        product_cards = driver.find_elements(By.CSS_SELECTOR, selector)
                         
                         if product_cards:
                             logger.info(f"Found {len(product_cards)} product links using selector: {selector}")
@@ -586,9 +842,9 @@ class NykaaScraper:
                     next_clicked = False
                     for selector in next_button_selectors:
                         try:
-                            next_button = self.driver.find_element(By.CSS_SELECTOR, selector)
+                            next_button = driver.find_element(By.CSS_SELECTOR, selector)
                             if next_button.is_enabled() and next_button.is_displayed():
-                                self.driver.execute_script("arguments[0].click();", next_button)
+                                driver.execute_script("arguments[0].click();", next_button)
                                 self.random_delay()
                                 page_num += 1
                                 next_clicked = True
@@ -610,8 +866,24 @@ class NykaaScraper:
         logger.info(f"Found {len(product_urls)} product URLs for keyword '{keyword}'")
         return product_urls[:max_products]
     
-    def _handle_popups(self):
-        """Handle common popups and overlays on Nykaa including sign-in modals"""
+    def search_products(self, keyword: str, max_products: int = 50) -> List[str]:
+        """
+        Search for products using keyword and return product URLs
+        
+        Args:
+            keyword: Search keyword
+            max_products: Maximum number of products to scrape
+            
+        Returns:
+            List of product URLs
+        """
+        if not self.driver:
+            self.setup_driver()
+        
+        return self._search_products_with_driver(self.driver, keyword, max_products)
+    
+    def _handle_popups_with_driver(self, driver):
+        """Handle common popups and overlays on Nykaa including sign-in modals with specific driver"""
         try:
             # Wait a moment for popups to appear
             time.sleep(2)
@@ -652,15 +924,15 @@ class NykaaScraper:
             for method, selector in close_methods:
                 try:
                     if method == By.CSS_SELECTOR:
-                        elements = self.driver.find_elements(method, selector)
+                        elements = driver.find_elements(method, selector)
                     else:  # XPATH
-                        elements = self.driver.find_elements(method, selector)
+                        elements = driver.find_elements(method, selector)
                     
                     for element in elements:
                         if element.is_displayed() and element.is_enabled():
                             try:
                                 # Try clicking the element
-                                self.driver.execute_script("arguments[0].click();", element)
+                                driver.execute_script("arguments[0].click();", element)
                                 time.sleep(1)
                                 logger.info(f"Successfully closed popup using: {selector}")
                                 break
@@ -678,7 +950,7 @@ class NykaaScraper:
             # Try pressing Escape key as last resort
             try:
                 from selenium.webdriver.common.keys import Keys
-                self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
+                driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
                 time.sleep(1)
                 logger.debug("Tried pressing Escape key")
             except Exception:
@@ -687,11 +959,16 @@ class NykaaScraper:
         except Exception as e:
             logger.debug(f"Error in popup handling: {e}")
 
-    def scrape_product_details(self, product_url: str) -> Optional[ProductInfo]:
+    def _handle_popups(self):
+        """Handle common popups and overlays on Nykaa including sign-in modals"""
+        self._handle_popups_with_driver(self.driver)
+
+    def _scrape_product_details_with_driver(self, driver, product_url: str) -> Optional[ProductInfo]:
         """
-        Scrape comprehensive product details from product page
+        Scrape comprehensive product details from product page using specific driver
         
         Args:
+            driver: WebDriver instance to use
             product_url: URL of the product page
             
         Returns:
@@ -700,21 +977,18 @@ class NykaaScraper:
         logger.info(f"Scraping product: {product_url}")
         
         try:
-            if not self.driver:
-                self.setup_driver()
-            
-            self.driver.get(product_url)
+            driver.get(product_url)
             self.random_delay()
             
             # Handle popups
-            self._handle_popups()
+            self._handle_popups_with_driver(driver)
             
             # Wait for page to load
-            WebDriverWait(self.driver, 15).until(
+            WebDriverWait(driver, 15).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "h1, .product-title"))
             )
             
-            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+            soup = BeautifulSoup(driver.page_source, 'html.parser')
             
             # Extract basic product information
             product_info = self._extract_basic_product_info(soup, product_url)
@@ -738,7 +1012,7 @@ class NykaaScraper:
             product_info.seller_info = self._extract_seller_info(soup)
             
             # Extract reviews (this might require scrolling or pagination)
-            product_info.reviews = self._extract_reviews(product_url)
+            product_info.reviews = self._extract_reviews_with_driver(driver, product_url)
             
             product_info.scraped_at = datetime.now().isoformat()
             
@@ -748,6 +1022,21 @@ class NykaaScraper:
         except Exception as e:
             logger.error(f"Error scraping product {product_url}: {e}")
             return None
+
+    def scrape_product_details(self, product_url: str) -> Optional[ProductInfo]:
+        """
+        Scrape comprehensive product details from product page
+        
+        Args:
+            product_url: URL of the product page
+            
+        Returns:
+            ProductInfo object with all scraped data
+        """
+        if not self.driver:
+            self.setup_driver()
+        
+        return self._scrape_product_details_with_driver(self.driver, product_url)
     
     def _extract_basic_product_info(self, soup: BeautifulSoup, product_url: str) -> Optional[ProductInfo]:
         """Extract basic product information from JSON data embedded in the page"""
@@ -1479,7 +1768,7 @@ class NykaaScraper:
             official_store=False
         )
     
-    def _extract_reviews(self, product_url: str) -> List[Review]:
+    def _extract_reviews_with_driver(self, driver, product_url: str) -> List[Review]:
         """Extract product reviews by navigating to dedicated reviews page"""
         reviews = []
         
@@ -1504,15 +1793,15 @@ class NykaaScraper:
                     reviews_url += "?ptype=reviews"
                 
                 logger.info(f"Navigating to reviews page: {reviews_url}")
-                self.driver.get(reviews_url)
+                driver.get(reviews_url)
                 self.random_delay()
                 
                 # Handle any popups
-                self._handle_popups()
+                self._handle_popups_with_driver(driver)
                 
                 # Wait for reviews to load
                 try:
-                    WebDriverWait(self.driver, 15).until(
+                    WebDriverWait(driver, 15).until(
                         EC.any_of(
                             EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='review-card']")),
                             EC.presence_of_element_located((By.CSS_SELECTOR, ".review-card")),
@@ -1522,10 +1811,10 @@ class NykaaScraper:
                     )
                 except TimeoutException:
                     logger.warning("No reviews found on dedicated reviews page")
-                    return self._extract_reviews_from_current_page()
+                    return self._extract_reviews_from_current_page_driver(driver)
                 
                 # Implement infinite scrolling to load all reviews
-                reviews = self._scrape_reviews_with_infinite_scroll()
+                reviews = self._scrape_reviews_with_infinite_scroll_driver(driver)
                 
                 if reviews:
                     logger.info(f"Successfully extracted {len(reviews)} reviews from dedicated page")
@@ -1533,11 +1822,17 @@ class NykaaScraper:
             
             # Fallback to extracting from current product page
             logger.info("Falling back to current page review extraction")
-            return self._extract_reviews_from_current_page()
+            return self._extract_reviews_from_current_page_driver(driver)
             
         except Exception as e:
             logger.error(f"Error extracting reviews: {e}")
-            return self._extract_reviews_from_current_page()
+            return self._extract_reviews_from_current_page_driver(driver)
+
+    def _extract_reviews(self, product_url: str) -> List[Review]:
+        """Extract product reviews by navigating to dedicated reviews page"""
+        if not self.driver:
+            self.setup_driver()
+        return self._extract_reviews_with_driver(self.driver, product_url)
 
     def _extract_product_slug(self, product_url: str) -> str:
         """Extract the product slug from URL for building reviews URL"""
@@ -1651,7 +1946,7 @@ class NykaaScraper:
             logger.warning(f"Error extracting product/SKU IDs: {e}")
             return None, None
 
-    def _scrape_reviews_with_infinite_scroll(self) -> List[Review]:
+    def _scrape_reviews_with_infinite_scroll_driver(self, driver):
         """Scrape reviews with infinite scrolling to get all available reviews"""
         reviews = []
         seen_reviews = set()
@@ -1663,7 +1958,7 @@ class NykaaScraper:
         try:
             while scroll_attempts < max_scroll_attempts and consecutive_no_new_reviews < max_consecutive_no_new:
                 # Get current page reviews
-                current_reviews = self._extract_reviews_from_current_reviews_page()
+                current_reviews = self._extract_reviews_from_current_reviews_page_driver(driver)
                 new_reviews_count = 0
                 
                 for review in current_reviews:
@@ -1682,7 +1977,7 @@ class NykaaScraper:
                     consecutive_no_new_reviews = 0
                 
                 # Scroll down to load more reviews
-                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
                 self.random_delay()
                 
                 # Try to click "Load More" or "Show More" buttons if present
@@ -1701,17 +1996,17 @@ class NykaaScraper:
                         if ":contains" in selector:
                             # Handle contains selector manually since Selenium doesn't support it
                             if "Load more" in selector:
-                                buttons = self.driver.find_elements(By.XPATH, "//button[contains(text(), 'Load more')]")
+                                buttons = driver.find_elements(By.XPATH, "//button[contains(text(), 'Load more')]")
                             elif "Show more" in selector:
-                                buttons = self.driver.find_elements(By.XPATH, "//button[contains(text(), 'Show more')]")
+                                buttons = driver.find_elements(By.XPATH, "//button[contains(text(), 'Show more')]")
                             else:
                                 buttons = []
                         else:
-                            buttons = self.driver.find_elements(By.CSS_SELECTOR, selector)
+                            buttons = driver.find_elements(By.CSS_SELECTOR, selector)
                         
                         for button in buttons:
                             if button.is_displayed() and button.is_enabled():
-                                self.driver.execute_script("arguments[0].click();", button)
+                                driver.execute_script("arguments[0].click();", button)
                                 self.random_delay()
                                 button_clicked = True
                                 logger.info(f"Clicked load more button: {selector}")
@@ -1734,12 +2029,12 @@ class NykaaScraper:
         logger.info(f"Completed review extraction with infinite scroll. Total reviews: {len(reviews)}")
         return reviews
 
-    def _extract_reviews_from_current_reviews_page(self) -> List[Review]:
+    def _extract_reviews_from_current_reviews_page_driver(self, driver):
         """Extract reviews from the current reviews page HTML using reliable selectors"""
         reviews = []
         
         try:
-            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+            soup = BeautifulSoup(driver.page_source, 'html.parser')
             
             # Look for review containers using more reliable selectors
             # Based on the HTML analysis, reviews are in divs with specific structure
@@ -2093,13 +2388,13 @@ class NykaaScraper:
             pass
         return ""
 
-    def _extract_reviews_from_current_page(self) -> List[Review]:
+    def _extract_reviews_from_current_page_driver(self, driver):
         """Fallback method to extract reviews from current product page"""
         reviews = []
         
         try:
             # Get the current page source for review extraction
-            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+            soup = BeautifulSoup(driver.page_source, 'html.parser')
             
             # Look for reviews in the JSON data first
             script_tags = soup.find_all('script')
@@ -2385,6 +2680,16 @@ class NykaaScraper:
                     return text
         return default
     
+    def _get_text_by_selectors_element(self, element, selectors: List[str], default: str = "") -> str:
+        """Get text content from element using multiple CSS selectors"""
+        for selector in selectors:
+            sub_element = element.select_one(selector)
+            if sub_element:
+                text = sub_element.get_text(strip=True)
+                if text:
+                    return text
+        return default
+    
     def _extract_price(self, price_text: str) -> float:
         """Extract numeric price from text"""
         if not price_text:
@@ -2434,9 +2739,27 @@ class NykaaScraper:
         # Fallback to URL hash
         return str(hash(product_url))
     
+    def _scrape_reviews_with_infinite_scroll(self) -> List[Review]:
+        """Scrape reviews with infinite scrolling to get all available reviews"""
+        if not self.driver:
+            self.setup_driver()
+        return self._scrape_reviews_with_infinite_scroll_driver(self.driver)
+
+    def _extract_reviews_from_current_reviews_page(self) -> List[Review]:
+        """Extract reviews from the current reviews page HTML using reliable selectors"""
+        if not self.driver:
+            self.setup_driver()
+        return self._extract_reviews_from_current_reviews_page_driver(self.driver)
+
+    def _extract_reviews_from_current_page(self) -> List[Review]:
+        """Fallback method to extract reviews from current product page"""
+        if not self.driver:
+            self.setup_driver()
+        return self._extract_reviews_from_current_page_driver(self.driver)
+
     def scrape_keywords(self, keywords: List[str], max_products_per_keyword: int = 20) -> Dict[str, Any]:
         """
-        Main method to scrape products for multiple keywords
+        Main method to scrape products for multiple keywords using multi-threading
         
         Args:
             keywords: List of search keywords
@@ -2445,45 +2768,44 @@ class NykaaScraper:
         Returns:
             Dictionary containing all scraped data
         """
-        logger.info(f"Starting scrape for keywords: {keywords}")
+        logger.info(f"Starting multi-threaded scrape for keywords: {keywords}")
+        logger.info(f"Using {self.max_threads} threads for parallel processing")
         
         self.scraped_data['scrape_metadata']['keywords_searched'] = keywords
         
-        all_product_urls = []
+        all_scraped_products = []
         
-        # Search for products for each keyword
-        for keyword in tqdm(keywords, desc="Searching keywords"):
-            try:
-                urls = self.search_products(keyword, max_products_per_keyword)
-                all_product_urls.extend(urls)
-                self.random_delay()
-            except Exception as e:
-                logger.error(f"Error searching for keyword '{keyword}': {e}")
-                continue
+        # Use ThreadPoolExecutor for parallel keyword processing
+        with ThreadPoolExecutor(max_workers=self.max_threads, thread_name_prefix="NykaaScraper") as executor:
+            # Submit all keyword scraping tasks
+            future_to_keyword = {}
+            for keyword in keywords:
+                future = executor.submit(self._scrape_keyword_thread, keyword, max_products_per_keyword)
+                future_to_keyword[future] = keyword
+            
+            # Collect results as they complete
+            for future in tqdm(as_completed(future_to_keyword), total=len(keywords), desc="Scraping keywords"):
+                keyword = future_to_keyword[future]
+                try:
+                    scraped_products = future.result()
+                    logger.info(f"Completed keyword '{keyword}': {len(scraped_products)} products")
+                    
+                    # Thread-safe data aggregation
+                    with self._data_lock:
+                        all_scraped_products.extend(scraped_products)
+                        # Count total reviews
+                        for product in scraped_products:
+                            self.scraped_data['scrape_metadata']['total_reviews'] += len(product.get('reviews', []))
+                            
+                except Exception as e:
+                    logger.error(f"Error processing keyword '{keyword}': {e}")
+                    continue
         
-        # Remove duplicates while preserving order
-        unique_urls = list(dict.fromkeys(all_product_urls))
-        logger.info(f"Found {len(unique_urls)} unique products to scrape")
+        # Update scraped data
+        self.scraped_data['products'] = all_scraped_products
+        self.scraped_data['scrape_metadata']['total_products'] = len(all_scraped_products)
         
-        # Scrape each product
-        scraped_products = []
-        for url in tqdm(unique_urls, desc="Scraping products"):
-            try:
-                product_info = self.scrape_product_details(url)
-                if product_info:
-                    scraped_products.append(asdict(product_info))
-                    self.scraped_data['scrape_metadata']['total_reviews'] += len(product_info.reviews)
-                
-                self.random_delay()
-                
-            except Exception as e:
-                logger.error(f"Error scraping product {url}: {e}")
-                continue
-        
-        self.scraped_data['products'] = scraped_products
-        self.scraped_data['scrape_metadata']['total_products'] = len(scraped_products)
-        
-        logger.info(f"Scraping completed. Total products: {len(scraped_products)}")
+        logger.info(f"Multi-threaded scraping completed. Total products: {len(all_scraped_products)}")
         return self.scraped_data
     
     def save_data(self, filename: str = None):
@@ -2548,11 +2870,25 @@ class NykaaScraper:
             logger.error(f"Error saving summary report: {e}")
     
     def cleanup(self):
-        """Clean up resources"""
-        if self.driver:
-            self.driver.quit()
-        if self.session:
-            self.session.close()
+        """Clean up resources including thread-local drivers"""
+        try:
+            # Clean up main driver
+            if self.driver:
+                self.driver.quit()
+                self.driver = None
+            
+            # Clean up thread-local drivers
+            if hasattr(self._thread_local, 'driver') and self._thread_local.driver:
+                self._thread_local.driver.quit()
+                self._thread_local.driver = None
+            
+            # Close session
+            if self.session:
+                self.session.close()
+                
+            logger.info("Cleanup completed")
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")
 
 
 def main():
@@ -2560,15 +2896,16 @@ def main():
     
     # Configuration
     KEYWORDS = [
-        "lipstick",
-
+        "eyeshadow",
+        "eyeliner"
     ]
     
-    MAX_PRODUCTS_PER_KEYWORD = 10  # Adjust based on needs
+    MAX_PRODUCTS_PER_KEYWORD = 40  # Adjust based on needs
+    MAX_THREADS = 2  # Number of threads for parallel processing
     HEADLESS = True  # Set to False to see browser in action
     
-    # Initialize scraper
-    scraper = NykaaScraper(headless=HEADLESS, delay_range=(2, 4))
+    # Initialize scraper with thread configuration
+    scraper = NykaaScraper(headless=HEADLESS, delay_range=(2, 4), max_threads=MAX_THREADS)
     
     try:
         # Run scraping

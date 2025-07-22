@@ -832,3 +832,485 @@
 2025-07-22 18:01:21,717 - INFO - Scroll 2: Found 24 reviews, 7 new
 2025-07-22 18:01:26,789 - INFO - Found 30 review elements using Verified Buyers text
 2025-07-22 18:01:26,795 - INFO - Scroll 3: Found 24 reviews, 0 new
+2025-07-22 18:01:30,823 - INFO - Found 30 review elements using Verified Buyers text
+2025-07-22 18:01:30,827 - INFO - Scroll 4: Found 24 reviews, 0 new
+2025-07-22 18:01:35,805 - INFO - Found 30 review elements using Verified Buyers text
+2025-07-22 18:01:35,809 - INFO - Scroll 5: Found 24 reviews, 0 new
+2025-07-22 18:01:40,751 - INFO - Found 30 review elements using Verified Buyers text
+2025-07-22 18:01:40,754 - INFO - Scroll 6: Found 24 reviews, 0 new
+2025-07-22 18:01:45,430 - INFO - Found 30 review elements using Verified Buyers text
+2025-07-22 18:01:45,435 - INFO - Scroll 7: Found 24 reviews, 0 new
+2025-07-22 18:01:49,758 - INFO - Completed review extraction with infinite scroll. Total reviews: 24
+2025-07-22 18:01:49,759 - INFO - Successfully extracted 24 reviews from dedicated page
+2025-07-22 18:01:49,760 - INFO - Successfully scraped product: Yves Saint Laurent Rouge Pur Couture Lipstick - N12 - Nude Instinct(3.8g)
+2025-07-22 18:01:51,807 - INFO - Scraping product: https://www.nykaa.com/bobbi-brown-crushed-lip-color/p/222549
+2025-07-22 18:02:01,020 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 130048 (char 130047)
+2025-07-22 18:02:01,021 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 18:02:02,154 - INFO - Extracted product ID from URL pattern '/p/(\d+)': 222549
+2025-07-22 18:02:02,356 - INFO - Final extracted IDs - Product ID: 222549, SKU ID: None
+2025-07-22 18:02:02,357 - INFO - Navigating to reviews page: https://www.nykaa.com/bobbi-brown-crushed-lip-color/reviews/222549?ptype=reviews
+2025-07-22 18:02:09,414 - INFO - Found 22 review elements using Verified Buyers text
+2025-07-22 18:02:09,418 - INFO - Scroll 1: Found 15 reviews, 15 new
+2025-07-22 18:02:12,796 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 18:02:12,801 - INFO - Scroll 2: Found 29 reviews, 14 new
+2025-07-22 18:02:16,575 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 18:02:16,581 - INFO - Scroll 3: Found 29 reviews, 0 new
+2025-07-22 18:02:20,845 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 18:02:20,850 - INFO - Scroll 4: Found 29 reviews, 0 new
+2025-07-22 18:02:24,916 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 18:02:24,921 - INFO - Scroll 5: Found 29 reviews, 0 new
+2025-07-22 18:02:29,959 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 18:02:29,963 - INFO - Scroll 6: Found 29 reviews, 0 new
+2025-07-22 18:02:34,973 - INFO - Found 42 review elements using Verified Buyers text
+2025-07-22 18:02:34,978 - INFO - Scroll 7: Found 29 reviews, 0 new
+2025-07-22 18:02:39,023 - INFO - Completed review extraction with infinite scroll. Total reviews: 29
+2025-07-22 18:02:39,024 - INFO - Successfully extracted 29 reviews from dedicated page
+2025-07-22 18:02:39,025 - INFO - Successfully scraped product: Bobbi Brown Crushed Pink Lip Color - Cranberry(3.4g)
+2025-07-22 18:02:41,887 - INFO - Scraping completed. Total products: 10
+2025-07-22 18:02:41,913 - INFO - Data saved to nykaa_scraped_data_20250722_180241.json
+2025-07-22 18:02:41,914 - INFO - Summary report saved to nykaa_scraped_data_20250722_180241_summary.txt
+2025-07-22 18:02:41,914 - INFO - Scraping completed successfully!
+2025-07-22 18:02:42,246 - INFO - Cleanup completed
+2025-07-22 18:44:17,839 - MainThread - INFO - Starting Nykaa multi-threaded scraper...
+2025-07-22 18:44:17,839 - MainThread - INFO - Configuration: 6 workers, 15 products per keyword
+2025-07-22 18:44:17,839 - MainThread - INFO - Starting multi-threaded scrape for keywords: ['eyeshadow', 'eyeliner']
+2025-07-22 18:44:17,852 - MainThread - INFO - Searching for products with keyword: 'eyeshadow'
+2025-07-22 18:44:17,852 - MainThread - INFO - Clearing webdriver-manager cache...
+2025-07-22 18:44:17,859 - MainThread - INFO - ====== WebDriver manager ======
+2025-07-22 18:44:18,075 - MainThread - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:44:18,229 - MainThread - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:44:18,353 - MainThread - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 18:44:18,366 - MainThread - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:44:18,691 - MainThread - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 18:44:18,693 - MainThread - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:44:18,693 - MainThread - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:44:18,816 - MainThread - INFO - Driver downloading response is 200
+2025-07-22 18:44:21,260 - MainThread - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:44:21,552 - MainThread - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 18:44:21,553 - MainThread - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:44:21,553 - MainThread - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 18:44:21,554 - MainThread - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:44:21,554 - MainThread - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:44:21,558 - MainThread - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 18:44:21,559 - MainThread - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 18:44:21,585 - MainThread - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 18:44:21,585 - MainThread - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 18:44:21,912 - MainThread - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 18:44:21,912 - MainThread - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:44:24,517 - MainThread - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 18:44:26,840 - MainThread - INFO - WebDriver created successfully for thread MainThread
+2025-07-22 18:44:33,597 - MainThread - INFO - Scraping page 1 for keyword 'eyeshadow'
+2025-07-22 18:44:33,617 - MainThread - INFO - Found 20 product links using selector: .css-qlopj4
+2025-07-22 18:44:35,228 - MainThread - INFO - Found 15 product URLs for keyword 'eyeshadow'
+2025-07-22 18:44:37,231 - MainThread - INFO - Searching for products with keyword: 'eyeliner'
+2025-07-22 18:44:37,231 - MainThread - INFO - Clearing webdriver-manager cache...
+2025-07-22 18:44:37,233 - MainThread - INFO - ====== WebDriver manager ======
+2025-07-22 18:44:37,385 - MainThread - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:44:37,507 - MainThread - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:44:37,622 - MainThread - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 18:44:37,622 - MainThread - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:44:37,918 - MainThread - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 18:44:37,921 - MainThread - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:44:37,921 - MainThread - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:44:37,996 - MainThread - INFO - Driver downloading response is 200
+2025-07-22 18:44:40,442 - MainThread - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:44:40,606 - MainThread - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 18:44:40,607 - MainThread - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:44:40,607 - MainThread - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 18:44:40,607 - MainThread - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:44:40,607 - MainThread - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:44:40,614 - MainThread - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 18:44:40,614 - MainThread - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 18:44:40,644 - MainThread - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 18:44:40,644 - MainThread - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 18:44:40,727 - MainThread - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 18:44:40,727 - MainThread - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:44:43,379 - MainThread - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 18:44:44,405 - MainThread - INFO - WebDriver created successfully for thread MainThread
+2025-07-22 18:44:49,363 - MainThread - INFO - Scraping page 1 for keyword 'eyeliner'
+2025-07-22 18:44:49,386 - MainThread - INFO - Found 20 product links using selector: .css-qlopj4
+2025-07-22 18:44:51,433 - MainThread - INFO - Found 15 product URLs for keyword 'eyeliner'
+2025-07-22 18:44:53,435 - MainThread - INFO - Found 30 unique products to scrape
+2025-07-22 18:44:53,436 - MainThread - INFO - Starting multi-threaded scraping with 6 workers
+2025-07-22 18:44:53,439 - ThreadPoolExecutor-0_0 - INFO - Starting to scrape product: https://www.nykaa.com/kay-beauty-eye-kanvas-discover-eyeshadow-palette/p/18267040
+2025-07-22 18:44:53,440 - ThreadPoolExecutor-0_1 - INFO - Starting to scrape product: https://www.nykaa.com/nykaa-cosmetics-eye-go-bare-9-in-1-eyeshadow-palette/p/20792068
+2025-07-22 18:44:53,440 - ThreadPoolExecutor-0_0 - INFO - Clearing webdriver-manager cache...
+2025-07-22 18:44:53,441 - ThreadPoolExecutor-0_2 - INFO - Starting to scrape product: https://www.nykaa.com/mars-all-i-need-makeup-kit/p/6883657
+2025-07-22 18:44:53,441 - ThreadPoolExecutor-0_1 - INFO - Clearing webdriver-manager cache...
+2025-07-22 18:44:53,441 - ThreadPoolExecutor-0_2 - INFO - Clearing webdriver-manager cache...
+2025-07-22 18:44:53,442 - ThreadPoolExecutor-0_3 - INFO - Starting to scrape product: https://www.nykaa.com/maybelline-new-york-the-blushed-nudes-palette/p/48066
+2025-07-22 18:44:53,444 - ThreadPoolExecutor-0_3 - INFO - Clearing webdriver-manager cache...
+2025-07-22 18:44:53,444 - ThreadPoolExecutor-0_4 - INFO - Starting to scrape product: https://www.nykaa.com/daily-life-forever52-34-color-eyeshadow-palette/p/9007835
+2025-07-22 18:44:53,444 - ThreadPoolExecutor-0_4 - INFO - Clearing webdriver-manager cache...
+2025-07-22 18:44:53,444 - ThreadPoolExecutor-0_5 - INFO - Starting to scrape product: https://www.nykaa.com/e-l-f-cosmetics-bite-size-eyeshadow/p/856728
+2025-07-22 18:44:53,445 - ThreadPoolExecutor-0_5 - INFO - Clearing webdriver-manager cache...
+2025-07-22 18:44:53,446 - ThreadPoolExecutor-0_1 - WARNING - webdriver-manager failed: [Errno 2] No such file or directory: 'THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 18:44:53,446 - ThreadPoolExecutor-0_1 - WARNING - Driver setup attempt failed: [Errno 2] No such file or directory: 'THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 18:44:53,449 - ThreadPoolExecutor-0_0 - WARNING - webdriver-manager failed: [Errno 2] No such file or directory: 'LICENSE.chromedriver'
+2025-07-22 18:44:53,450 - ThreadPoolExecutor-0_0 - WARNING - Driver setup attempt failed: [Errno 2] No such file or directory: 'LICENSE.chromedriver'
+2025-07-22 18:44:53,450 - ThreadPoolExecutor-0_2 - WARNING - webdriver-manager failed: [Errno 2] No such file or directory: 'chromedriver-mac-arm64'
+2025-07-22 18:44:53,450 - ThreadPoolExecutor-0_4 - WARNING - webdriver-manager failed: [Errno 2] No such file or directory: 'chromedriver-mac-arm64'
+2025-07-22 18:44:53,450 - ThreadPoolExecutor-0_5 - WARNING - webdriver-manager failed: [Errno 2] No such file or directory: 'chromedriver-mac-arm64'
+2025-07-22 18:44:53,452 - ThreadPoolExecutor-0_2 - WARNING - Driver setup attempt failed: [Errno 2] No such file or directory: 'chromedriver-mac-arm64'
+2025-07-22 18:44:53,453 - ThreadPoolExecutor-0_3 - INFO - ====== WebDriver manager ======
+2025-07-22 18:44:53,454 - ThreadPoolExecutor-0_4 - WARNING - Driver setup attempt failed: [Errno 2] No such file or directory: 'chromedriver-mac-arm64'
+2025-07-22 18:44:53,456 - ThreadPoolExecutor-0_0 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 18:44:53,456 - ThreadPoolExecutor-0_1 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 18:44:53,458 - ThreadPoolExecutor-0_5 - WARNING - Driver setup attempt failed: [Errno 2] No such file or directory: 'chromedriver-mac-arm64'
+2025-07-22 18:44:53,460 - ThreadPoolExecutor-0_2 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 18:44:53,462 - ThreadPoolExecutor-0_0 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 18:44:53,463 - ThreadPoolExecutor-0_4 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 18:44:53,463 - ThreadPoolExecutor-0_1 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 18:44:53,466 - ThreadPoolExecutor-0_2 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 18:44:53,466 - ThreadPoolExecutor-0_4 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 18:44:53,470 - ThreadPoolExecutor-0_5 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 18:44:53,470 - ThreadPoolExecutor-0_5 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 18:44:53,545 - ThreadPoolExecutor-0_5 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 18:44:53,546 - ThreadPoolExecutor-0_2 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 18:44:53,546 - ThreadPoolExecutor-0_4 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 18:44:53,546 - ThreadPoolExecutor-0_1 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 18:44:53,546 - ThreadPoolExecutor-0_0 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 18:44:53,546 - ThreadPoolExecutor-0_5 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 18:44:53,546 - ThreadPoolExecutor-0_2 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 18:44:53,546 - ThreadPoolExecutor-0_1 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 18:44:53,546 - ThreadPoolExecutor-0_4 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 18:44:53,546 - ThreadPoolExecutor-0_0 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 18:44:53,602 - ThreadPoolExecutor-0_3 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:44:53,645 - ThreadPoolExecutor-0_4 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 18:44:53,645 - ThreadPoolExecutor-0_5 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 18:44:53,645 - ThreadPoolExecutor-0_4 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:44:53,645 - ThreadPoolExecutor-0_5 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:44:53,650 - ThreadPoolExecutor-0_0 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 18:44:53,650 - ThreadPoolExecutor-0_0 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:44:53,652 - ThreadPoolExecutor-0_2 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 18:44:53,652 - ThreadPoolExecutor-0_2 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:44:53,653 - ThreadPoolExecutor-0_1 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 18:44:53,653 - ThreadPoolExecutor-0_1 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:44:53,743 - ThreadPoolExecutor-0_3 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:44:54,001 - ThreadPoolExecutor-0_3 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 18:44:54,001 - ThreadPoolExecutor-0_3 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:44:54,709 - ThreadPoolExecutor-0_3 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 18:44:54,711 - ThreadPoolExecutor-0_3 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:44:54,711 - ThreadPoolExecutor-0_3 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:44:54,895 - ThreadPoolExecutor-0_3 - INFO - Driver downloading response is 200
+2025-07-22 18:45:02,967 - ThreadPoolExecutor-0_3 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:45:03,201 - ThreadPoolExecutor-0_3 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 18:45:03,202 - ThreadPoolExecutor-0_3 - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:45:03,202 - ThreadPoolExecutor-0_3 - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 18:45:03,202 - ThreadPoolExecutor-0_3 - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:45:03,202 - ThreadPoolExecutor-0_3 - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:45:03,207 - ThreadPoolExecutor-0_3 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 18:45:03,207 - ThreadPoolExecutor-0_3 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 18:45:03,237 - ThreadPoolExecutor-0_3 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 18:45:03,238 - ThreadPoolExecutor-0_3 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 18:45:03,419 - ThreadPoolExecutor-0_3 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 18:45:03,419 - ThreadPoolExecutor-0_3 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:45:07,486 - ThreadPoolExecutor-0_1 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 18:45:08,561 - ThreadPoolExecutor-0_1 - INFO - WebDriver created successfully for thread ThreadPoolExecutor-0_1
+2025-07-22 18:45:10,373 - ThreadPoolExecutor-0_3 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 18:45:10,886 - ThreadPoolExecutor-0_3 - ERROR - Failed to create WebDriver: Message: Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver unexpectedly exited. Status code was: -9
+
+2025-07-22 18:45:10,886 - ThreadPoolExecutor-0_3 - ERROR - Error in worker thread for https://www.nykaa.com/maybelline-new-york-the-blushed-nudes-palette/p/48066: Message: Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver unexpectedly exited. Status code was: -9
+
+2025-07-22 18:45:10,908 - ThreadPoolExecutor-0_3 - INFO - Starting to scrape product: https://www.nykaa.com/charlotte-tilbury-luxury-palette/p/985207
+2025-07-22 18:45:10,910 - ThreadPoolExecutor-0_3 - INFO - Clearing webdriver-manager cache...
+2025-07-22 18:45:10,913 - ThreadPoolExecutor-0_3 - INFO - ====== WebDriver manager ======
+2025-07-22 18:45:11,154 - ThreadPoolExecutor-0_5 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 18:45:11,154 - ThreadPoolExecutor-0_4 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 18:45:11,238 - ThreadPoolExecutor-0_3 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:45:11,382 - ThreadPoolExecutor-0_3 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:45:11,585 - ThreadPoolExecutor-0_3 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 18:45:11,586 - ThreadPoolExecutor-0_3 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:45:11,798 - ThreadPoolExecutor-0_2 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 18:45:11,945 - ThreadPoolExecutor-0_0 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 18:45:11,991 - ThreadPoolExecutor-0_3 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 18:45:11,993 - ThreadPoolExecutor-0_3 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:45:11,993 - ThreadPoolExecutor-0_3 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:45:12,081 - ThreadPoolExecutor-0_3 - INFO - Driver downloading response is 200
+2025-07-22 18:45:14,849 - ThreadPoolExecutor-0_3 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:45:15,035 - ThreadPoolExecutor-0_3 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 18:45:15,036 - ThreadPoolExecutor-0_3 - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:45:15,036 - ThreadPoolExecutor-0_3 - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 18:45:15,036 - ThreadPoolExecutor-0_3 - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:45:15,036 - ThreadPoolExecutor-0_3 - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:45:15,040 - ThreadPoolExecutor-0_3 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 18:45:15,040 - ThreadPoolExecutor-0_3 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 18:45:15,071 - ThreadPoolExecutor-0_3 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 18:45:15,071 - ThreadPoolExecutor-0_3 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 18:45:15,145 - ThreadPoolExecutor-0_3 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 18:45:15,145 - ThreadPoolExecutor-0_3 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:45:15,851 - ThreadPoolExecutor-0_1 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 91749 (char 91748)
+2025-07-22 18:45:15,851 - ThreadPoolExecutor-0_1 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 18:45:18,803 - ThreadPoolExecutor-0_3 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 18:45:23,461 - ThreadPoolExecutor-0_1 - INFO - Successfully scraped: Nykaa Cosmetics 9 in 1 Eyeshadow Palette - Eye Go Bare(9g)
+2025-07-22 18:45:23,559 - ThreadPoolExecutor-0_1 - INFO - Starting to scrape product: https://www.nykaa.com/lakme-absolute-spotlight-eye-shadow-palette/p/888613
+2025-07-22 18:45:23,563 - ThreadPoolExecutor-0_1 - INFO - Clearing webdriver-manager cache...
+2025-07-22 18:45:23,564 - ThreadPoolExecutor-0_1 - INFO - ====== WebDriver manager ======
+2025-07-22 18:45:23,686 - ThreadPoolExecutor-0_1 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:45:23,806 - ThreadPoolExecutor-0_1 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:45:23,920 - ThreadPoolExecutor-0_1 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 18:45:23,920 - ThreadPoolExecutor-0_1 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:45:24,254 - ThreadPoolExecutor-0_1 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 18:45:24,257 - ThreadPoolExecutor-0_1 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:45:24,258 - ThreadPoolExecutor-0_1 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:45:24,583 - ThreadPoolExecutor-0_1 - INFO - Driver downloading response is 200
+2025-07-22 18:45:27,125 - ThreadPoolExecutor-0_1 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:45:27,325 - ThreadPoolExecutor-0_1 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 18:45:27,327 - ThreadPoolExecutor-0_1 - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:45:27,327 - ThreadPoolExecutor-0_1 - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 18:45:27,327 - ThreadPoolExecutor-0_1 - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:45:27,327 - ThreadPoolExecutor-0_1 - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:45:27,332 - ThreadPoolExecutor-0_1 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 18:45:27,332 - ThreadPoolExecutor-0_1 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 18:45:27,360 - ThreadPoolExecutor-0_1 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 18:45:27,360 - ThreadPoolExecutor-0_1 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 18:45:27,428 - ThreadPoolExecutor-0_1 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 18:45:27,428 - ThreadPoolExecutor-0_1 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:45:30,031 - ThreadPoolExecutor-0_1 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 18:45:41,691 - ThreadPoolExecutor-0_5 - ERROR - Failed to create WebDriver: Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:45:41,692 - ThreadPoolExecutor-0_4 - ERROR - Failed to create WebDriver: Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:45:41,692 - ThreadPoolExecutor-0_5 - ERROR - Error in worker thread for https://www.nykaa.com/e-l-f-cosmetics-bite-size-eyeshadow/p/856728: Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:45:41,692 - ThreadPoolExecutor-0_4 - ERROR - Error in worker thread for https://www.nykaa.com/daily-life-forever52-34-color-eyeshadow-palette/p/9007835: Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:45:42,337 - ThreadPoolExecutor-0_2 - ERROR - Failed to create WebDriver: Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:45:42,338 - ThreadPoolExecutor-0_2 - ERROR - Error in worker thread for https://www.nykaa.com/mars-all-i-need-makeup-kit/p/6883657: Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:45:42,451 - ThreadPoolExecutor-0_0 - ERROR - Failed to create WebDriver: Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:45:42,451 - ThreadPoolExecutor-0_0 - ERROR - Error in worker thread for https://www.nykaa.com/kay-beauty-eye-kanvas-discover-eyeshadow-palette/p/18267040: Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:45:49,177 - ThreadPoolExecutor-0_3 - ERROR - Failed to create WebDriver: Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:45:49,178 - ThreadPoolExecutor-0_3 - ERROR - Error in worker thread for https://www.nykaa.com/charlotte-tilbury-luxury-palette/p/985207: Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:46:00,319 - ThreadPoolExecutor-0_1 - ERROR - Failed to create WebDriver: Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:46:00,319 - ThreadPoolExecutor-0_1 - ERROR - Error in worker thread for https://www.nykaa.com/lakme-absolute-spotlight-eye-shadow-palette/p/888613: Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:46:41,702 - ThreadPoolExecutor-0_4 - ERROR - Service process refused to terminate gracefully with SIGTERM, escalating to SIGKILL.
+Traceback (most recent call last):
+  File "/Users/chris_sin/Desktop/Nykaascraper/.venv/lib/python3.11/site-packages/selenium/webdriver/common/service.py", line 168, in _terminate_process
+    self.process.wait(60)
+  File "/opt/homebrew/Cellar/python@3.11/3.11.13/Frameworks/Python.framework/Versions/3.11/lib/python3.11/subprocess.py", line 1264, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.11/3.11.13/Frameworks/Python.framework/Versions/3.11/lib/python3.11/subprocess.py", line 2045, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['/Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver', '--port=56732']' timed out after 60 seconds
+2025-07-22 18:46:41,703 - ThreadPoolExecutor-0_5 - ERROR - Service process refused to terminate gracefully with SIGTERM, escalating to SIGKILL.
+Traceback (most recent call last):
+  File "/Users/chris_sin/Desktop/Nykaascraper/.venv/lib/python3.11/site-packages/selenium/webdriver/common/service.py", line 168, in _terminate_process
+    self.process.wait(60)
+  File "/opt/homebrew/Cellar/python@3.11/3.11.13/Frameworks/Python.framework/Versions/3.11/lib/python3.11/subprocess.py", line 1264, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.11/3.11.13/Frameworks/Python.framework/Versions/3.11/lib/python3.11/subprocess.py", line 2045, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['/Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver', '--port=56731']' timed out after 60 seconds
+2025-07-22 18:46:41,713 - ThreadPoolExecutor-0_4 - INFO - Starting to scrape product: https://www.nykaa.com/mars-dance-with-joy-eyeshadow-palette/p/6955060
+2025-07-22 18:46:41,714 - ThreadPoolExecutor-0_4 - INFO - Clearing webdriver-manager cache...
+2025-07-22 18:46:41,714 - ThreadPoolExecutor-0_5 - INFO - Starting to scrape product: https://www.nykaa.com/lakme-ultimteglam-eyeshadow/p/16685644
+2025-07-22 18:46:41,714 - ThreadPoolExecutor-0_5 - INFO - Clearing webdriver-manager cache...
+2025-07-22 18:46:41,715 - ThreadPoolExecutor-0_5 - WARNING - webdriver-manager failed: [Errno 2] No such file or directory: 'THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 18:46:41,715 - ThreadPoolExecutor-0_5 - WARNING - Driver setup attempt failed: [Errno 2] No such file or directory: 'THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 18:46:41,723 - ThreadPoolExecutor-0_4 - INFO - ====== WebDriver manager ======
+2025-07-22 18:46:41,726 - ThreadPoolExecutor-0_5 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 18:46:41,727 - ThreadPoolExecutor-0_5 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 18:46:41,840 - ThreadPoolExecutor-0_5 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 18:46:41,841 - ThreadPoolExecutor-0_5 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 18:46:41,885 - ThreadPoolExecutor-0_4 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:46:42,007 - ThreadPoolExecutor-0_5 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 18:46:42,007 - ThreadPoolExecutor-0_5 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:46:42,063 - ThreadPoolExecutor-0_4 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:46:42,183 - ThreadPoolExecutor-0_4 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 18:46:42,183 - ThreadPoolExecutor-0_4 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:46:42,348 - ThreadPoolExecutor-0_2 - ERROR - Service process refused to terminate gracefully with SIGTERM, escalating to SIGKILL.
+Traceback (most recent call last):
+  File "/Users/chris_sin/Desktop/Nykaascraper/.venv/lib/python3.11/site-packages/selenium/webdriver/common/service.py", line 168, in _terminate_process
+    self.process.wait(60)
+  File "/opt/homebrew/Cellar/python@3.11/3.11.13/Frameworks/Python.framework/Versions/3.11/lib/python3.11/subprocess.py", line 1264, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.11/3.11.13/Frameworks/Python.framework/Versions/3.11/lib/python3.11/subprocess.py", line 2045, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['/Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver', '--port=56746']' timed out after 60 seconds
+2025-07-22 18:46:42,349 - ThreadPoolExecutor-0_2 - INFO - Starting to scrape product: https://www.nykaa.com/nykaa-cosmetics-eyes-on-me-4-in-1-quad-eyeshadow-palette/p/5692185
+2025-07-22 18:46:42,350 - ThreadPoolExecutor-0_2 - INFO - ====== WebDriver manager ======
+2025-07-22 18:46:42,454 - ThreadPoolExecutor-0_2 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:46:42,459 - ThreadPoolExecutor-0_0 - ERROR - Service process refused to terminate gracefully with SIGTERM, escalating to SIGKILL.
+Traceback (most recent call last):
+  File "/Users/chris_sin/Desktop/Nykaascraper/.venv/lib/python3.11/site-packages/selenium/webdriver/common/service.py", line 168, in _terminate_process
+    self.process.wait(60)
+  File "/opt/homebrew/Cellar/python@3.11/3.11.13/Frameworks/Python.framework/Versions/3.11/lib/python3.11/subprocess.py", line 1264, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.11/3.11.13/Frameworks/Python.framework/Versions/3.11/lib/python3.11/subprocess.py", line 2045, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['/Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver', '--port=56749']' timed out after 60 seconds
+2025-07-22 18:46:42,459 - ThreadPoolExecutor-0_0 - INFO - Starting to scrape product: https://www.nykaa.com/nykaa-eyes-on-me-10-in-1-eyeshadow-palette/p/713143
+2025-07-22 18:46:42,460 - ThreadPoolExecutor-0_0 - INFO - ====== WebDriver manager ======
+2025-07-22 18:46:42,544 - ThreadPoolExecutor-0_0 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:46:42,644 - ThreadPoolExecutor-0_2 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:46:42,706 - ThreadPoolExecutor-0_0 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:46:42,808 - ThreadPoolExecutor-0_2 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 18:46:42,808 - ThreadPoolExecutor-0_2 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:46:42,856 - ThreadPoolExecutor-0_0 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 18:46:42,856 - ThreadPoolExecutor-0_0 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:46:43,020 - ThreadPoolExecutor-0_4 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 18:46:43,022 - ThreadPoolExecutor-0_4 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:46:43,022 - ThreadPoolExecutor-0_4 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:46:43,104 - ThreadPoolExecutor-0_4 - INFO - Driver downloading response is 200
+2025-07-22 18:46:43,295 - ThreadPoolExecutor-0_2 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 18:46:43,297 - ThreadPoolExecutor-0_2 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:46:43,297 - ThreadPoolExecutor-0_2 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:46:43,434 - ThreadPoolExecutor-0_2 - INFO - Driver downloading response is 200
+2025-07-22 18:46:43,926 - MainThread - INFO - Scraping interrupted by user
+2025-07-22 18:46:43,926 - MainThread - INFO - Stopping scraping operations...
+2025-07-22 18:46:43,926 - MainThread - INFO - Stopping scraping operations...
+2025-07-22 18:46:43,926 - MainThread - INFO - Cleanup completed
+2025-07-22 18:46:43,926 - MainThread - INFO - Cleanup completed
+2025-07-22 18:58:12,818 - INFO - Starting Nykaa scraper...
+2025-07-22 18:58:12,819 - INFO - Starting multi-threaded scrape for keywords: ['eyeshadow', 'eyeliner']
+2025-07-22 18:58:12,819 - INFO - Using 2 threads for parallel processing
+2025-07-22 18:58:12,819 - INFO - [NykaaScraper_0] Starting to scrape keyword: 'eyeshadow'
+2025-07-22 18:58:12,819 - INFO - [NykaaScraper_1] Starting to scrape keyword: 'eyeliner'
+2025-07-22 18:58:12,819 - INFO - Creating new driver for thread NykaaScraper_0
+2025-07-22 18:58:12,819 - INFO - Creating new driver for thread NykaaScraper_1
+2025-07-22 18:58:12,819 - INFO - ====== WebDriver manager ======
+2025-07-22 18:58:12,819 - INFO - ====== WebDriver manager ======
+2025-07-22 18:58:12,990 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:58:12,990 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:58:13,134 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:58:13,137 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:58:13,271 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 18:58:13,271 - INFO - There is no [mac64] chromedriver "138.0.7204.157" for browser google-chrome "138.0.7204" in cache
+2025-07-22 18:58:13,279 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:58:13,279 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:58:13,570 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 18:58:13,573 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:58:13,573 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:58:13,589 - INFO - WebDriver version 138.0.7204.157 selected
+2025-07-22 18:58:13,592 - INFO - Modern chrome version https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:58:13,592 - INFO - About to download new driver from https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.157/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:58:13,701 - INFO - Driver downloading response is 200
+2025-07-22 18:58:13,705 - INFO - Driver downloading response is 200
+2025-07-22 18:58:18,313 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:58:18,515 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 18:58:18,516 - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:58:18,516 - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 18:58:18,517 - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:58:18,517 - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:58:18,522 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 18:58:18,522 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 18:58:18,558 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 18:58:18,559 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 18:58:18,638 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 18:58:18,638 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:58:18,700 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 18:58:18,898 - INFO - Driver has been saved in cache [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157]
+2025-07-22 18:58:18,899 - INFO - webdriver-manager returned path: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:58:18,899 - INFO - Searching for chromedriver executable in: /Users/chris_sin/.wdm/drivers/chromedriver
+2025-07-22 18:58:18,899 - WARNING - webdriver-manager failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:58:18,899 - WARNING - Driver setup attempt failed: Could not find executable chromedriver in downloaded package. Searched from: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 18:58:18,906 - WARNING - System ChromeDriver not available: System ChromeDriver not found
+2025-07-22 18:58:18,906 - WARNING - Driver setup attempt failed: System ChromeDriver not found
+2025-07-22 18:58:18,934 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 18:58:18,935 - INFO - Trying ChromeDriver version: 138.0.7204.158
+2025-07-22 18:58:19,031 - INFO - Found compatible ChromeDriver version: 138.0.7204.158
+2025-07-22 18:58:19,031 - INFO - Downloading ChromeDriver from: https://storage.googleapis.com/chrome-for-testing-public/138.0.7204.158/mac-arm64/chromedriver-mac-arm64.zip
+2025-07-22 18:58:22,797 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 18:58:23,763 - INFO - Successfully downloaded and installed ChromeDriver: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+2025-07-22 18:58:53,120 - ERROR - Failed to create WebDriver for thread NykaaScraper_0: Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:58:53,121 - ERROR - [NykaaScraper_0] Error scraping keyword 'eyeshadow': Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:58:54,098 - ERROR - Failed to create WebDriver for thread NykaaScraper_1: Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:58:54,098 - ERROR - [NykaaScraper_1] Error scraping keyword 'eyeliner': Message: Can not connect to the Service /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver-mac-arm64/chromedriver
+
+2025-07-22 18:59:42,273 - INFO - Scraping interrupted by user
+2025-07-22 18:59:42,274 - INFO - Cleanup completed
+2025-07-22 18:59:42,275 - INFO - Cleanup completed
+2025-07-22 19:03:13,046 - INFO - Starting Nykaa scraper...
+2025-07-22 19:03:13,046 - INFO - Starting multi-threaded scrape for keywords: ['eyeshadow', 'eyeliner']
+2025-07-22 19:03:13,046 - INFO - Using 2 threads for parallel processing
+2025-07-22 19:03:13,046 - INFO - [NykaaScraper_0] Starting to scrape keyword: 'eyeshadow'
+2025-07-22 19:03:13,046 - INFO - [NykaaScraper_1] Starting to scrape keyword: 'eyeliner'
+2025-07-22 19:03:13,046 - INFO - Creating new driver for thread NykaaScraper_0
+2025-07-22 19:03:13,046 - INFO - Creating new driver for thread NykaaScraper_1
+2025-07-22 19:03:13,047 - INFO - Setting up ChromeDriver...
+2025-07-22 19:03:13,047 - INFO - Setting up ChromeDriver...
+2025-07-22 19:03:13,057 - INFO - ====== WebDriver manager ======
+2025-07-22 19:03:13,057 - INFO - ====== WebDriver manager ======
+2025-07-22 19:03:13,264 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 19:03:13,265 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 19:03:13,395 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 19:03:13,395 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 19:03:13,507 - INFO - Driver [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver] found in cache
+2025-07-22 19:03:13,507 - INFO - Using webdriver-manager ChromeDriver: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 19:03:13,510 - ERROR - Failed to create WebDriver for thread NykaaScraper_1: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 19:03:13,510 - ERROR - [NykaaScraper_1] Error scraping keyword 'eyeliner': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 19:03:13,510 - INFO - Completed keyword 'eyeliner': 0 products
+2025-07-22 19:03:13,512 - INFO - Driver [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver] found in cache
+2025-07-22 19:03:13,513 - INFO - Using webdriver-manager ChromeDriver: /Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver
+2025-07-22 19:03:13,514 - ERROR - Failed to create WebDriver for thread NykaaScraper_0: [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 19:03:13,515 - ERROR - [NykaaScraper_0] Error scraping keyword 'eyeshadow': [Errno 8] Exec format error: '/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver'
+2025-07-22 19:03:13,515 - INFO - Completed keyword 'eyeshadow': 0 products
+2025-07-22 19:03:13,515 - INFO - Multi-threaded scraping completed. Total products: 0
+2025-07-22 19:03:13,515 - INFO - Data saved to nykaa_scraped_data_20250722_190313.json
+2025-07-22 19:03:13,515 - INFO - Summary report saved to nykaa_scraped_data_20250722_190313_summary.txt
+2025-07-22 19:03:13,515 - INFO - Scraping completed successfully!
+2025-07-22 19:03:13,516 - INFO - Cleanup completed
+2025-07-22 19:03:13,516 - INFO - Cleanup completed
+2025-07-22 19:04:23,403 - INFO - Starting Nykaa scraper...
+2025-07-22 19:04:23,403 - INFO - Starting multi-threaded scrape for keywords: ['eyeshadow', 'eyeliner']
+2025-07-22 19:04:23,403 - INFO - Using 2 threads for parallel processing
+2025-07-22 19:04:23,404 - INFO - [NykaaScraper_0] Starting to scrape keyword: 'eyeshadow'
+2025-07-22 19:04:23,404 - INFO - Creating new driver for thread NykaaScraper_0
+2025-07-22 19:04:23,404 - INFO - Setting up ChromeDriver...
+2025-07-22 19:04:23,404 - INFO - [NykaaScraper_1] Starting to scrape keyword: 'eyeliner'
+2025-07-22 19:04:23,404 - INFO - Creating new driver for thread NykaaScraper_1
+2025-07-22 19:04:23,407 - INFO - Setting up ChromeDriver...
+2025-07-22 19:04:23,410 - INFO - ====== WebDriver manager ======
+2025-07-22 19:04:23,411 - INFO - ====== WebDriver manager ======
+2025-07-22 19:04:23,684 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 19:04:23,684 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 19:04:23,872 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 19:04:23,875 - INFO - Get LATEST chromedriver version for google-chrome
+2025-07-22 19:04:24,240 - INFO - Driver [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver] found in cache
+2025-07-22 19:04:24,247 - INFO - Driver [/Users/chris_sin/.wdm/drivers/chromedriver/mac64/138.0.7204.157/chromedriver-mac-arm64/THIRD_PARTY_NOTICES.chromedriver] found in cache
+2025-07-22 19:04:24,248 - INFO - webdriver-manager returned wrong path, searching for actual chromedriver...
+2025-07-22 19:04:24,248 - INFO - webdriver-manager returned wrong path, searching for actual chromedriver...
+2025-07-22 19:04:24,249 - INFO - Downloading ChromeDriver manually...
+2025-07-22 19:04:24,249 - INFO - Downloading ChromeDriver manually...
+2025-07-22 19:04:24,392 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 19:04:24,392 - INFO - Trying ChromeDriver version 138.0.7204.158...
+2025-07-22 19:04:24,393 - INFO - Detected Chrome version: 138.0.7204.158
+2025-07-22 19:04:24,393 - INFO - Trying ChromeDriver version 138.0.7204.158...
+2025-07-22 19:04:29,558 - INFO - Successfully downloaded and verified ChromeDriver 138.0.7204.158: /Users/chris_sin/Desktop/Nykaascraper/drivers/chromedriver_138.0.7204.158/chromedriver-mac-arm64/chromedriver
+2025-07-22 19:04:31,457 - INFO - WebDriver created for thread NykaaScraper_0
+2025-07-22 19:04:31,457 - INFO - Searching for products with keyword: 'eyeshadow'
+2025-07-22 19:04:37,645 - INFO - Scraping page 1 for keyword 'eyeshadow'
+2025-07-22 19:04:37,657 - INFO - Found 20 product links using selector: .css-qlopj4
+2025-07-22 19:04:40,399 - INFO - Scraping page 2 for keyword 'eyeshadow'
+2025-07-22 19:04:40,416 - INFO - Found 20 product links using selector: .css-qlopj4
+2025-07-22 19:04:44,112 - INFO - Found 40 product URLs for keyword 'eyeshadow'
+2025-07-22 19:04:44,113 - INFO - [NykaaScraper_0] Found 40 URLs for keyword 'eyeshadow'
+2025-07-22 19:04:44,113 - INFO - [NykaaScraper_0] Scraping product 1/40 for 'eyeshadow': https://www.nykaa.com/kay-beauty-eye-kanvas-discover-eyeshadow-palette/p/18267040
+2025-07-22 19:04:44,113 - INFO - Scraping product: https://www.nykaa.com/kay-beauty-eye-kanvas-discover-eyeshadow-palette/p/18267040
+2025-07-22 19:04:51,085 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 111590 (char 111589)
+2025-07-22 19:04:51,086 - WARNING - JSON extraction failed, trying HTML extraction as fallback
+2025-07-22 19:04:52,989 - INFO - Extracted product ID from URL pattern '/p/(\d+)': 18267040
+2025-07-22 19:04:52,989 - WARNING - Error extracting product/SKU IDs: 'NoneType' object has no attribute 'page_source'
+2025-07-22 19:04:52,989 - INFO - Falling back to current page review extraction
+2025-07-22 19:04:53,179 - INFO - Extracted 5 reviews from JSON data
+2025-07-22 19:04:53,179 - INFO - Total reviews extracted from current page: 5
+2025-07-22 19:04:53,179 - INFO - Successfully scraped product: Kay Beauty Eye Kanvas Discover Eyeshadow Palette - Power(4g)
+2025-07-22 19:04:55,646 - INFO - [NykaaScraper_0] Scraping product 2/40 for 'eyeshadow': https://www.nykaa.com/nykaa-cosmetics-eye-go-bare-9-in-1-eyeshadow-palette/p/20792068
+2025-07-22 19:04:55,648 - INFO - Scraping product: https://www.nykaa.com/nykaa-cosmetics-eye-go-bare-9-in-1-eyeshadow-palette/p/20792068
+2025-07-22 19:05:02,723 - WARNING - JSON decode error: Unterminated string starting at: line 1 column 91753 (char 91752)
+2025-07-22 19:05:02,723 - WARNING - JSON extraction failed, trying HTML extraction as fallback
