@@ -402,7 +402,7 @@ class NykaaScraper:
                             potential_path = os.path.join(root, file)
                             if os.path.isfile(potential_path):
                                 driver_path = potential_path
-                                break
+                        break
                     if driver_path:
                         break
                 
@@ -1826,7 +1826,7 @@ class NykaaScraper:
         
         try:
             # First, try to get product ID and SKU from the current page
-            product_id, sku_id = self._extract_product_and_sku_ids(product_url)
+            product_id, sku_id = self._extract_product_and_sku_ids(product_url, driver)
             
             if product_id:
                 # Extract the product slug from the current URL for the reviews URL
@@ -1911,7 +1911,7 @@ class NykaaScraper:
             logger.warning(f"Error extracting product slug: {e}")
             return None
 
-    def _extract_product_and_sku_ids(self, product_url: str) -> tuple:
+    def _extract_product_and_sku_ids(self, product_url: str, driver=None) -> tuple:
         """Extract product ID and SKU ID from current page or URL"""
         product_id = None
         sku_id = None
@@ -1933,36 +1933,40 @@ class NykaaScraper:
                     logger.info(f"Extracted product ID from URL pattern '{pattern}': {product_id}")
                     break
             
-            # Method 2: Extract from current page JSON data
-            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-            script_tags = soup.find_all('script')
-            
-            for script in script_tags:
-                if script.string and any(term in script.string for term in ['productId', 'parentId', 'skuId']):
-                    try:
-                        # Look for various ID patterns in JSON
-                        id_patterns = [
-                            (r'"productId":"?(\d+)"?', 'productId'),
-                            (r'"parentId":"?(\d+)"?', 'parentId'),
-                            (r'"id":"?(\d+)"?', 'id'),
-                            (r'"skuId":"?(\d+)"?', 'skuId')
-                        ]
-                        
-                        for pattern, field_name in id_patterns:
-                            matches = re.findall(pattern, script.string)
-                            if matches:
-                                if field_name == 'skuId':
-                                    sku_id = matches[0]
-                                    logger.info(f"Extracted SKU ID from {field_name}: {sku_id}")
-                                elif not product_id:  # Only set product_id if not already found
-                                    product_id = matches[0]
-                                    logger.info(f"Extracted product ID from {field_name}: {product_id}")
-                        
-                        if product_id:
-                            break
-                    except Exception as e:
-                        logger.warning(f"Error parsing script for IDs: {e}")
-                        continue
+            # Method 2: Extract from current page JSON data if driver is provided
+            if driver:
+                try:
+                    soup = BeautifulSoup(driver.page_source, 'html.parser')
+                    script_tags = soup.find_all('script')
+                    
+                    for script in script_tags:
+                        if script.string and any(term in script.string for term in ['productId', 'parentId', 'skuId']):
+                            try:
+                                # Look for various ID patterns in JSON
+                                id_patterns = [
+                                    (r'"productId":"?(\d+)"?', 'productId'),
+                                    (r'"parentId":"?(\d+)"?', 'parentId'),
+                                    (r'"id":"?(\d+)"?', 'id'),
+                                    (r'"skuId":"?(\d+)"?', 'skuId')
+                                ]
+                                
+                                for pattern, field_name in id_patterns:
+                                    matches = re.findall(pattern, script.string)
+                                    if matches:
+                                        if field_name == 'skuId':
+                                            sku_id = matches[0]
+                                            logger.info(f"Extracted SKU ID from {field_name}: {sku_id}")
+                                        elif not product_id:  # Only set product_id if not already found
+                                            product_id = matches[0]
+                                            logger.info(f"Extracted product ID from {field_name}: {product_id}")
+                                
+                                if product_id:
+                                    break
+                            except Exception as e:
+                                logger.warning(f"Error parsing script for IDs: {e}")
+                                continue
+                except Exception as e:
+                    logger.warning(f"Error getting page source: {e}")
             
             # Method 3: Try to extract from URL query parameters
             if '?' in product_url:
@@ -1981,15 +1985,19 @@ class NykaaScraper:
                     logger.warning(f"Error parsing URL query parameters: {e}")
             
             # Method 4: Fallback - try to extract from page title or breadcrumbs
-            if not product_id:
-                # Look for data attributes
-                product_containers = soup.find_all(['div', 'section'], attrs={'data-product-id': True})
-                for container in product_containers:
-                    data_id = container.get('data-product-id')
-                    if data_id and data_id.isdigit():
-                        product_id = data_id
-                        logger.info(f"Extracted product ID from data attribute: {product_id}")
-                        break
+            if not product_id and driver:
+                try:
+                    soup = BeautifulSoup(driver.page_source, 'html.parser')
+                    # Look for data attributes
+                    product_containers = soup.find_all(['div', 'section'], attrs={'data-product-id': True})
+                    for container in product_containers:
+                        data_id = container.get('data-product-id')
+                        if data_id and data_id.isdigit():
+                            product_id = data_id
+                            logger.info(f"Extracted product ID from data attribute: {product_id}")
+                            break
+                except Exception as e:
+                    logger.warning(f"Error parsing page for data attributes: {e}")
             
             logger.info(f"Final extracted IDs - Product ID: {product_id}, SKU ID: {sku_id}")
             return product_id, sku_id
@@ -2003,11 +2011,14 @@ class NykaaScraper:
         reviews = []
         seen_reviews = set()
         scroll_attempts = 0
-        max_scroll_attempts = 50  # Prevent infinite loops
+        max_scroll_attempts = 100  # Increase attempts to get more reviews
         consecutive_no_new_reviews = 0
-        max_consecutive_no_new = 5
+        max_consecutive_no_new = 8  # Allow more attempts before giving up
         
         try:
+            # Wait for the page to fully load
+            time.sleep(5)
+            
             while scroll_attempts < max_scroll_attempts and consecutive_no_new_reviews < max_consecutive_no_new:
                 # Get current page reviews
                 current_reviews = self._extract_reviews_from_current_reviews_page_driver(driver)
@@ -2021,7 +2032,7 @@ class NykaaScraper:
                         reviews.append(review)
                         new_reviews_count += 1
                 
-                logger.info(f"Scroll {scroll_attempts + 1}: Found {len(current_reviews)} reviews, {new_reviews_count} new")
+                logger.info(f"Scroll {scroll_attempts + 1}: Found {len(current_reviews)} reviews, {new_reviews_count} new. Total: {len(reviews)}")
                 
                 if new_reviews_count == 0:
                     consecutive_no_new_reviews += 1
@@ -2808,7 +2819,7 @@ class NykaaScraper:
         if not self.driver:
             self.setup_driver()
         return self._extract_reviews_from_current_page_driver(self.driver)
-
+    
     def scrape_keywords(self, keywords: List[str], max_products_per_keyword: int = 20) -> Dict[str, Any]:
         """
         Main method to scrape products for multiple keywords using multi-threading
