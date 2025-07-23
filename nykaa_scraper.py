@@ -33,7 +33,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException
-from webdriver_manager.chrome import ChromeDriverManager
 from fake_useragent import UserAgent
 from tqdm import tqdm
 
@@ -145,7 +144,7 @@ class CheckpointManager:
         
         # Enhanced checkpoint data with transferability metadata
         checkpoint_data = {
-            'format_version': '2.0',  # Version for compatibility
+            'format_version': '3.0',  # Updated version for new features
             'keyword': keyword,
             'scraped_products': scraped_products,
             'processed_urls': list(processed_urls),
@@ -157,17 +156,25 @@ class CheckpointManager:
                 'total_urls_processed': len(processed_urls),
                 'progress_percentage': (len(processed_urls) / max(1, metadata.get('total_urls', 1))) * 100,
                 'estimated_remaining': metadata.get('total_urls', 0) - len(processed_urls),
-                'scraper_version': '2.0_live_checkpoints',
+                'scraper_version': '3.0_smart_resume',
                 'transfer_ready': True,  # Indicates this checkpoint can be shared
                 'system_info': {
                     'platform': os.name,
                     'working_directory': os.getcwd()
-                }
+                },
+                # NEW: URL scraping completion tracking
+                'url_scraping_completed': metadata.get('url_scraping_completed', False),
+                'all_product_urls': metadata.get('all_product_urls', []),
+                'max_products_requested': metadata.get('max_products_requested', 0),
+                'url_scraping_timestamp': metadata.get('url_scraping_timestamp', ''),
+                'can_skip_url_scraping': metadata.get('url_scraping_completed', False) and len(metadata.get('all_product_urls', [])) > 0
             },
             'resume_instructions': {
                 'how_to_resume': 'Place this checkpoint file in the checkpoints/ directory and run the scraper with the same keyword',
                 'required_keyword': keyword,
-                'compatible_versions': ['2.0', '2.0_live_checkpoints']
+                'compatible_versions': ['3.0', '3.0_smart_resume'],
+                'smart_resume_available': metadata.get('url_scraping_completed', False),
+                'resume_from_product_scraping': 'URLs already scraped, will resume from product detail extraction'
             }
         }
         
@@ -196,6 +203,10 @@ class CheckpointManager:
             progress_pct = checkpoint_data['checkpoint_metadata']['progress_percentage']
             logger.info(f"💾 Live checkpoint saved for '{keyword}': {len(scraped_products)} products ({progress_pct:.1f}% complete)")
             
+            # Log smart resume info
+            if metadata.get('url_scraping_completed'):
+                logger.info(f"- Smart resume enabled: {len(metadata.get('all_product_urls', []))} URLs cached for fast resume!")
+            
         except Exception as e:
             logger.error(f"Failed to save live checkpoint for '{keyword}': {e}")
     
@@ -210,13 +221,13 @@ class CheckpointManager:
                 
                 # Check format version compatibility
                 format_version = data.get('format_version', '1.0')
-                if format_version not in ['1.0', '2.0', '2.0_live_checkpoints']:
+                if format_version not in ['1.0', '2.0', '2.0_live_checkpoints', '3.0', '3.0_smart_resume']:
                     logger.warning(f"Checkpoint format version {format_version} may be incompatible")
                 
                 # Validate checkpoint integrity
                 required_keys = ['keyword', 'scraped_products', 'processed_urls']
                 if not all(key in data for key in required_keys):
-                    logger.error(f"Checkpoint file corrupted - missing required keys")
+                    logger.error("Checkpoint file corrupted - missing required keys")
                     return None
                 
                 # Check if this checkpoint is for the right keyword
@@ -235,8 +246,20 @@ class CheckpointManager:
                 logger.info(f"   🎯 Products: {len(data['scraped_products'])}")
                 logger.info(f"   🔗 URLs processed: {len(data['processed_urls'])}")
                 
+                # NEW: Log smart resume capabilities
+                url_scraping_completed = checkpoint_meta.get('url_scraping_completed', False)
+                all_urls_count = len(checkpoint_meta.get('all_product_urls', []))
+                max_products_requested = checkpoint_meta.get('max_products_requested', 0)
+                
+                if url_scraping_completed and all_urls_count > 0:
+                    logger.info(f"   🚀 Smart Resume Available: {all_urls_count} URLs cached")
+                    logger.info(f"   📋 Original max products: {max_products_requested}")
+                    logger.info("   ⚡ Will skip URL scraping and resume from product extraction")
+                else:
+                    logger.info("   🔍 Will need to scrape URLs first (not cached)")
+                
                 if checkpoint_meta.get('transfer_ready'):
-                    logger.info(f"   ✅ This checkpoint is transfer-ready")
+                    logger.info("   ✅ This checkpoint is transfer-ready")
                 
                 return data
                 
@@ -262,8 +285,13 @@ class CheckpointManager:
         
         return None
     
-    def clear_checkpoint(self, keyword: str):
-        """Clear checkpoint after successful completion"""
+    def clear_checkpoint(self, keyword: str, completion_status: str = 'completed'):
+        """Clear checkpoint after successful completion (only clear on 'completed' status)"""
+        if completion_status != 'completed':
+            logger.info(f"🔒 Preserving checkpoint for '{keyword}' due to status: {completion_status}")
+            logger.info(f"📁 Checkpoint can be resumed by running the scraper again with keyword: '{keyword}'")
+            return
+        
         files_to_remove = [
             os.path.join(self.checkpoint_dir, f"checkpoint_{keyword.replace(' ', '_')}.pkl"),
             os.path.join(self.checkpoint_dir, f"checkpoint_{keyword.replace(' ', '_')}.json")
@@ -279,7 +307,7 @@ class CheckpointManager:
         if keyword in self._last_save_time:
             del self._last_save_time[keyword]
         
-        logger.info(f"🗑️  Checkpoint cleared for keyword '{keyword}'")
+        logger.info(f"🗑️  Checkpoint cleared for keyword '{keyword}' after successful completion")
     
     def force_save_checkpoint(self, keyword: str, scraped_products: List[Dict], 
                              processed_urls: set, metadata: Dict):
@@ -338,6 +366,10 @@ class NykaaScraper:
         self.enable_checkpoints = enable_checkpoints
         self.save_frequency = save_frequency
         self.output_dir = output_dir
+        
+        # Fast mode settings (can be set externally)
+        self.fast_mode = False
+        self.max_scroll_time = 45  # Default scroll time
         
         # Create output directory
         os.makedirs(self.output_dir, exist_ok=True)
@@ -776,6 +808,8 @@ class NykaaScraper:
     
     def random_delay(self):
         """Add random delay between requests"""
+        if self.fast_mode:
+            return  # Skip all delays in fast mode
         delay = random.uniform(*self.delay_range)
         time.sleep(delay)
     
@@ -787,19 +821,43 @@ class NykaaScraper:
         # Load checkpoint if available
         processed_urls = set()
         scraped_products = []
+        product_urls = []
+        url_scraping_completed = False
         
         if self.checkpoint_manager:
             checkpoint_data = self.checkpoint_manager.load_checkpoint(keyword)
             if checkpoint_data:
                 scraped_products = checkpoint_data.get('scraped_products', [])
                 processed_urls = set(checkpoint_data.get('processed_urls', []))
-                logger.info(f"[{thread_name}] Resuming from checkpoint: {len(scraped_products)} products already scraped")
+                
+                # NEW: Smart resume logic
+                checkpoint_meta = checkpoint_data.get('checkpoint_metadata', {})
+                url_scraping_completed = checkpoint_meta.get('url_scraping_completed', False)
+                cached_urls = checkpoint_meta.get('all_product_urls', [])
+                max_products_from_checkpoint = checkpoint_meta.get('max_products_requested', 0)
+                
+                # Check if we can use cached URLs
+                if url_scraping_completed and cached_urls and max_products <= max_products_from_checkpoint:
+                    product_urls = cached_urls[:max_products]  # Use cached URLs, limited to current max_products
+                    logger.info(f"[{thread_name}] 🚀 Smart Resume: Using {len(product_urls)} cached URLs")
+                    logger.info(f"[{thread_name}] ⚡ Skipping URL scraping phase")
+                elif url_scraping_completed and cached_urls and max_products > max_products_from_checkpoint:
+                    logger.info(f"[{thread_name}] 🔄 Need more products ({max_products}) than cached ({max_products_from_checkpoint})")
+                    logger.info(f"[{thread_name}] 🔍 Will scrape URLs again to get more products")
+                    # Will scrape URLs again below
+                else:
+                    logger.info(f"[{thread_name}] 📂 Resuming from checkpoint: {len(scraped_products)} products already scraped")
+                    logger.info(f"[{thread_name}] 🔍 Will need to scrape URLs (not cached or incomplete)")
         
         try:
             driver = self._get_thread_driver()
             
-            # Get product URLs
-            product_urls = self._search_products_optimized(driver, keyword, max_products)
+            # Get product URLs (skip if smart resume is applicable)
+            if not product_urls:  # Only scrape URLs if we don't have cached ones
+                logger.info(f"[{thread_name}] 🔍 Scraping product URLs...")
+                product_urls = self._search_products_optimized(driver, keyword, max_products)
+                url_scraping_completed = True
+                logger.info(f"[{thread_name}] ✅ URL scraping completed: {len(product_urls)} URLs found")
             
             # Filter out already processed URLs
             new_urls = [url for url in product_urls if url not in processed_urls]
@@ -812,8 +870,20 @@ class NykaaScraper:
                 'remaining': len(new_urls),
                 'keyword': keyword,
                 'max_products': max_products,
-                'thread_name': thread_name
+                'thread_name': thread_name,
+                # NEW: Smart resume fields
+                'url_scraping_completed': url_scraping_completed,
+                'all_product_urls': product_urls,
+                'max_products_requested': max_products,
+                'url_scraping_timestamp': datetime.now().isoformat() if url_scraping_completed else ''
             }
+            
+            # Save checkpoint with URL info immediately after URL scraping
+            if self.checkpoint_manager and url_scraping_completed:
+                logger.info(f"[{thread_name}] 💾 Saving checkpoint with cached URLs for smart resume...")
+                self.checkpoint_manager.save_checkpoint(
+                    keyword, scraped_products, processed_urls, enhanced_metadata
+                )
             
             # Process new URLs with frequent checkpointing
             for i, url in enumerate(new_urls):
@@ -858,6 +928,8 @@ class NykaaScraper:
                     # Handle Ctrl+C gracefully with force save
                     logger.info(f"[{thread_name}] ⚠️  Keyboard interrupt detected - saving checkpoint...")
                     if self.checkpoint_manager:
+                        enhanced_metadata['status'] = 'interrupted'
+                        enhanced_metadata['interruption_time'] = datetime.now().isoformat()
                         self.checkpoint_manager.force_save_checkpoint(
                             keyword, scraped_products, processed_urls, enhanced_metadata
                         )
@@ -890,9 +962,11 @@ class NykaaScraper:
                     'keyword': keyword,
                     'total_products': len(scraped_products),
                     'total_reviews': sum(len(p.get('reviews', [])) for p in scraped_products),
-                    'scraper_version': '2.0_live_checkpoints',
+                    'scraper_version': '3.0_smart_resume',
                     'checkpoint_enabled': self.checkpoint_manager is not None,
-                    'transfer_ready': True
+                    'transfer_ready': True,
+                    'smart_resume_used': bool(checkpoint_data and checkpoint_data.get('checkpoint_metadata', {}).get('url_scraping_completed')),
+                    'urls_were_cached': len(product_urls) > 0 and not url_scraping_completed
                 },
                 'products': scraped_products
             }
@@ -900,26 +974,27 @@ class NykaaScraper:
             # Save separate JSON file for this keyword
             self._save_keyword_data(keyword, keyword_data)
             
-            # Clear checkpoint on successful completion
+            # Clear checkpoint ONLY on successful completion
             if self.checkpoint_manager:
-                self.checkpoint_manager.clear_checkpoint(keyword)
+                self.checkpoint_manager.clear_checkpoint(keyword, 'completed')
             
             logger.info(f"[{thread_name}] ✅ Completed '{keyword}': {len(scraped_products)} products")
             return keyword_data
             
         except KeyboardInterrupt:
-            logger.info(f"[{thread_name}] ⚠️  Process interrupted - checkpoint saved")
-            # Return partial data
+            logger.info(f"[{thread_name}] ⚠️  Process interrupted - checkpoint preserved for resume")
+            # Return partial data but don't clear checkpoint
             keyword_data = {
                 'scrape_metadata': {
                     'scrape_date': datetime.now().isoformat(),
                     'keyword': keyword,
                     'total_products': len(scraped_products),
                     'total_reviews': sum(len(p.get('reviews', [])) for p in scraped_products),
-                    'scraper_version': '2.0_live_checkpoints',
+                    'scraper_version': '3.0_smart_resume',
                     'status': 'interrupted',
                     'checkpoint_enabled': True,
-                    'resume_available': True
+                    'resume_available': True,
+                    'checkpoint_preserved': True
                 },
                 'products': scraped_products
             }
@@ -928,13 +1003,15 @@ class NykaaScraper:
         except Exception as e:
             logger.error(f"[{thread_name}] Error processing keyword '{keyword}': {e}")
             
-            # Force save checkpoint on any major error
+            # Force save checkpoint on any major error but don't clear it
             if self.checkpoint_manager and len(scraped_products) > 0:
                 enhanced_metadata['status'] = 'error'
                 enhanced_metadata['error'] = str(e)
+                enhanced_metadata['error_time'] = datetime.now().isoformat()
                 self.checkpoint_manager.force_save_checkpoint(
                     keyword, scraped_products, processed_urls, enhanced_metadata
                 )
+                logger.info(f"[{thread_name}] 🔒 Checkpoint preserved for resume after error")
             
             # Return partial data if available
             keyword_data = {
@@ -943,10 +1020,11 @@ class NykaaScraper:
                     'keyword': keyword,
                     'total_products': len(scraped_products),
                     'total_reviews': sum(len(p.get('reviews', [])) for p in scraped_products),
-                    'scraper_version': '2.0_live_checkpoints',
+                    'scraper_version': '3.0_smart_resume',
                     'error': str(e),
                     'checkpoint_enabled': True,
-                    'resume_available': len(scraped_products) > 0
+                    'resume_available': len(scraped_products) > 0,
+                    'checkpoint_preserved': True
                 },
                 'products': scraped_products
             }
@@ -1223,8 +1301,9 @@ class NykaaScraper:
             logger.info(f"Extracting reviews from: {reviews_url}")
             driver.get(reviews_url)
             
-            # Wait for initial content to load
-            time.sleep(self.review_load_wait_time)
+            # Wait for initial content to load - faster in fast mode
+            initial_wait = 2 if self.fast_mode else self.review_load_wait_time
+            time.sleep(initial_wait)
             
             # Handle popups
             self._handle_review_page_popups(driver)
@@ -1243,12 +1322,15 @@ class NykaaScraper:
             
             # NOW THE PERSISTENT PART - NEVER GIVE UP ON LOAD MORE!
             total_scroll_time = 0
-            max_scroll_time = 45  # 45 seconds of scrolling!
+            max_scroll_time = self.max_scroll_time if hasattr(self, 'max_scroll_time') else 45
             load_more_attempts = 0
-            max_load_more_attempts = 100  # More attempts
+            max_load_more_attempts = 50 if self.fast_mode else 100  # Fewer attempts in fast mode
             consecutive_no_new = 0
             
-            logger.info("Starting PERSISTENT Load More detection - will scroll for up to 45 seconds!")
+            if self.fast_mode:
+                logger.info(f"Starting FAST MODE Load More detection - will scroll for up to {max_scroll_time} seconds!")
+            else:
+                logger.info(f"Starting PERSISTENT Load More detection - will scroll for up to {max_scroll_time} seconds!")
             
             while (total_scroll_time < max_scroll_time and 
                    load_more_attempts < max_load_more_attempts and 
@@ -1283,14 +1365,17 @@ class NykaaScraper:
                         """)
                     elif scroll_type == 3:
                         # Scroll by viewport increments
+                        viewport_wait = 0.2 if self.fast_mode else 0.5
                         for i in range(3):
                             driver.execute_script("window.scrollBy(0, window.innerHeight);")
-                            time.sleep(0.5)
+                            time.sleep(viewport_wait)
                     else:
                         # Final aggressive scroll
                         driver.execute_script("window.scrollTo(0, document.body.scrollHeight + 1000);")
                     
-                    time.sleep(2)  # Wait for content to load after each scroll
+                    # Wait for content to load after each scroll - faster in fast mode
+                    scroll_wait = 1 if self.fast_mode else 2
+                    time.sleep(scroll_wait)
                     
                     # Check again for "No more reviews to show" after each scroll
                     if self._check_no_more_reviews(driver):
@@ -1305,8 +1390,9 @@ class NykaaScraper:
                         load_more_attempts += 1
                         logger.info(f"SUCCESS! Clicked Load More button (attempt {load_more_attempts}) after {total_scroll_time}s scrolling")
                         
-                        # Wait for new content to load
-                        time.sleep(8)  # Longer wait for content
+                        # Wait for new content to load - faster in fast mode
+                        wait_time = 3 if self.fast_mode else 8
+                        time.sleep(wait_time)
                         
                         # Check for "No more reviews" after Load More click
                         if self._check_no_more_reviews(driver):
@@ -1343,7 +1429,9 @@ class NykaaScraper:
                 # If no Load More found in this round, continue scrolling
                 if not load_more_found:
                     logger.info(f"No Load More found yet after {total_scroll_time:.1f}s - continuing to scroll...")
-                    time.sleep(1)  # Brief pause before next scroll round
+                    # Brief pause before next scroll round - faster in fast mode
+                    pause_time = 0.5 if self.fast_mode else 1
+                    time.sleep(pause_time)
             
             # Final summary
             if self._check_no_more_reviews(driver):
@@ -2107,10 +2195,84 @@ def main():
     import argparse
     
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Nykaa Product Scraper with Advanced Features')
+    parser = argparse.ArgumentParser(
+        description='Nykaa Product Scraper with Advanced Features',
+        epilog='''
+Examples:
+  python nykaa_scraper.py                    # Normal mode with delays (safer)
+  python nykaa_scraper.py --fast             # Fast mode: no delays, maximum speed
+  python nykaa_scraper.py --list-checkpoints # List available checkpoints
+  python nykaa_scraper.py --test-review URL  # Test review extraction for specific product
+
+Smart Resume & Checkpoint Features:
+  - Checkpoints are automatically saved every 5 products
+  - On interruption (Ctrl+C) or error, checkpoints are preserved
+  - Smart resume: URLs are cached, so resume skips URL scraping phase
+  - Only successful completion clears checkpoints
+  - Can handle different max_products settings between runs
+
+Fast Mode Benefits:
+  - Removes all delays between requests (0 seconds instead of 2-5 seconds)
+  - Reduces scroll timeout from 45s to 10s
+  - Minimizes wait times for content loading
+  - Fewer scroll attempts and Load More retries
+  - Significantly faster scraping (3-5x speed improvement)
+
+Warning: Fast mode may increase chance of being blocked by Nykaa.
+        ''',
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument('--test-review', type=str, metavar='PRODUCT_URL', 
                        help='Test review extraction for a specific product URL')
+    parser.add_argument('--fast', action='store_true',
+                       help='Enable fast mode: removes all delays, reduces timeouts for maximum speed')
+    parser.add_argument('--list-checkpoints', action='store_true',
+                       help='List all available checkpoints and their resume capabilities')
     args = parser.parse_args()
+    
+    # If list-checkpoints mode, show checkpoints and exit
+    if args.list_checkpoints:
+        checkpoint_manager = CheckpointManager()
+        checkpoints = checkpoint_manager.list_available_checkpoints()
+        
+        if not checkpoints:
+            print("📂 No checkpoints found.")
+            return
+        
+        print("📂 AVAILABLE CHECKPOINTS:")
+        print("=" * 80)
+        
+        for i, checkpoint in enumerate(checkpoints, 1):
+            print(f"\n{i}. Keyword: '{checkpoint['keyword']}'")
+            print(f"   📁 File: {checkpoint['file']}")
+            print(f"   📊 Progress: {checkpoint['progress']:.1f}%")
+            print(f"   🎯 Products: {checkpoint['products_count']}")
+            print(f"   🔗 URLs processed: {checkpoint['urls_processed']}")
+            print(f"   💾 Saved: {checkpoint['save_time']}")
+            print(f"   📦 Transferable: {'Yes' if checkpoint['transferable'] else 'No'}")
+            
+            # Show smart resume info if available
+            try:
+                checkpoint_file = os.path.join("checkpoints", checkpoint['file'])
+                with open(checkpoint_file, 'rb') as f:
+                    data = pickle.load(f)
+                
+                checkpoint_meta = data.get('checkpoint_metadata', {})
+                if checkpoint_meta.get('url_scraping_completed'):
+                    cached_urls = len(checkpoint_meta.get('all_product_urls', []))
+                    max_products = checkpoint_meta.get('max_products_requested', 0)
+                    print(f"   🚀 Smart Resume: Available ({cached_urls} URLs cached)")
+                    print(f"   📋 Max products: {max_products}")
+                else:
+                    print(f"   🔍 Smart Resume: Not available (URLs need scraping)")
+                    
+            except Exception:
+                print(f"   ❓ Smart Resume: Unknown (checkpoint format issue)")
+        
+        print(f"\n💡 To resume a checkpoint, run: python nykaa_scraper.py")
+        print(f"   The scraper will automatically detect and resume from the most recent checkpoint.")
+        print("=" * 80)
+        return
     
     # If test-review mode, run review test and exit
     if args.test_review:
@@ -2123,8 +2285,8 @@ def main():
     
     # Keywords to search for
     KEYWORDS = [
-        "eyeshadow",
-        "eyeliner"
+        "mascara",
+        "lip gloss"
     ]
     
     # === SCRAPING SCALE CONFIGURATION ===
@@ -2138,12 +2300,23 @@ def main():
     
     # === BROWSER CONFIGURATION ===
     HEADLESS = True
-    DELAY_RANGE = (2, 5)  # Longer delays for large-scale to avoid detection
     
-    # === REVIEW SCRAPING CONFIGURATION ===
-    MAX_SCROLL_ATTEMPTS = 200  # High for thorough extraction
-    MAX_CONSECUTIVE_NO_NEW = 15  # More patience for large-scale
-    REVIEW_LOAD_WAIT_TIME = 10  # Longer wait for heavy pages
+    # === FAST MODE CONFIGURATION ===
+    if args.fast:
+        # Fast mode: remove all delays and minimize timeouts
+        DELAY_RANGE = (0, 0)  # No delays
+        MAX_SCROLL_ATTEMPTS = 50  # Fewer scroll attempts
+        MAX_CONSECUTIVE_NO_NEW = 5  # Less patience
+        REVIEW_LOAD_WAIT_TIME = 2  # Minimal wait time
+        MAX_SCROLL_TIME = 10  # Reduced scroll time from 45s to 10s
+        logger.info("🚀 FAST MODE ENABLED: All delays removed, timeouts minimized")
+    else:
+        # Normal mode: standard delays for avoiding detection
+        DELAY_RANGE = (2, 5)  # Longer delays for large-scale to avoid detection
+        MAX_SCROLL_ATTEMPTS = 200  # High for thorough extraction
+        MAX_CONSECUTIVE_NO_NEW = 15  # More patience for large-scale
+        REVIEW_LOAD_WAIT_TIME = 10  # Longer wait for heavy pages
+        MAX_SCROLL_TIME = 45  # Standard scroll time
     
     # === CHECKPOINT CONFIGURATION ===
     ENABLE_CHECKPOINTS = True  # Essential for large-scale scraping
@@ -2160,6 +2333,8 @@ def main():
     
     logger.info("=" * 60)
     logger.info("NYKAA SCRAPER - FIXED VERSION WITH LOAD MORE")
+    if args.fast:
+        logger.info("🚀 FAST MODE ACTIVE - MAXIMUM SPEED")
     logger.info("=" * 60)
     logger.info(f"Keywords: {len(KEYWORDS)} ({KEYWORDS})")
     logger.info(f"Threads: {effective_threads}")
@@ -2167,6 +2342,10 @@ def main():
     logger.info(f"Reviews per product: {MAX_REVIEWS_PER_PRODUCT}")
     logger.info(f"Checkpoints enabled: {ENABLE_CHECKPOINTS}")
     logger.info(f"Output directory: {OUTPUT_DIR}")
+    if args.fast:
+        logger.info(f"Delay range: {DELAY_RANGE}")
+        logger.info(f"Max scroll time: {MAX_SCROLL_TIME}s")
+        logger.info(f"Review load wait: {REVIEW_LOAD_WAIT_TIME}s")
     logger.info("=" * 60)
     
     # Initialize optimized scraper
@@ -2182,6 +2361,11 @@ def main():
         save_frequency=SAVE_FREQUENCY,
         output_dir=OUTPUT_DIR
     )
+    
+    # Pass fast mode settings to scraper if needed
+    if args.fast:
+        scraper.fast_mode = True
+        scraper.max_scroll_time = MAX_SCROLL_TIME
     
     try:
         start_time = datetime.now()
@@ -2199,6 +2383,8 @@ def main():
         
         logger.info("=" * 60)
         logger.info("SCRAPING COMPLETED SUCCESSFULLY!")
+        if args.fast:
+            logger.info("🚀 FAST MODE RESULTS")
         logger.info("=" * 60)
         logger.info(f"Duration: {duration}")
         logger.info(f"Total products: {total_products}")
